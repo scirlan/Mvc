@@ -36,7 +36,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
 
             var requestServices = bindingContext.OperationBindingContext.HttpContext.RequestServices;
             var instance = _typeActivator.CreateInstance(requestServices, bindingContext.ModelMetadata.BinderType);
-
             var modelBinder = instance as IModelBinder;
             if (modelBinder == null)
             {

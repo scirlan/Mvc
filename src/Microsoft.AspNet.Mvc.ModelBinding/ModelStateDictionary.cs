@@ -135,7 +135,10 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         /// <inheritdoc />
         public bool IsValid
         {
-            get { return ValidationState == ModelValidationState.Valid; }
+            get
+            {
+                return ErrorCount == 0;
+            }
         }
 
         /// <inheritdoc />
@@ -282,6 +285,24 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             }
 
             return GetValidity(entries);
+        }
+
+        /// <summary>
+        /// Returns <see cref="ModelValidationState"/> for the <paramref name="key"/>.
+        /// </summary>
+        /// <param name="key">The key to look up model state errors for.</param>
+        /// <returns>Returns <see cref="ModelValidationState.Unvalidated"/> if no entry is found for the specified
+        /// key, <see cref="ModelValidationState.Invalid"/> if an instance is found with one or more model
+        /// state errors; <see cref="ModelValidationState.Valid"/> otherwise.</returns>
+        public ModelValidationState GetValidationState([NotNull] string key)
+        {
+            ModelState exactMatchValue;
+            if (TryGetValue(key, out exactMatchValue))
+            {
+                return exactMatchValue.ValidationState;
+            }
+
+            return ModelValidationState.Unvalidated;
         }
 
         /// <summary>

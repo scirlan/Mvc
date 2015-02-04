@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Microsoft.Framework.DependencyInjection;
 
 namespace Microsoft.AspNet.Mvc.ModelBinding
 {
@@ -22,6 +23,8 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         /// Initializes a new instance of the CompositeModelBinder class.
         /// </summary>
         /// <param name="modelBinders">A collection of <see cref="IModelBinder"/> instances.</param>
+        /// <param name="validationExcludeFiltersProvider">
+        /// A type which can provide <see cref="IValidationExcludeFiltersProvider.ExcludeFilters"/>.</param>
         public CompositeModelBinder([NotNull] IEnumerable<IModelBinder> modelBinders)
         {
             ModelBinders = new List<IModelBinder>(modelBinders);
@@ -30,11 +33,12 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         /// <inheritdoc />
         public IReadOnlyList<IModelBinder> ModelBinders { get; }
 
+        public IReadOnlyList<IExcludeTypeValidationFilter> ValidationExcludeFilters { get; set; }
+
         public virtual async Task<bool> BindModelAsync([NotNull] ModelBindingContext bindingContext)
         {
             var newBindingContext = CreateNewBindingContext(bindingContext,
-                                                            bindingContext.ModelName,
-                                                            reuseValidationNode: true);
+                                                            bindingContext.ModelName);
 
             var boundSuccessfully = await TryBind(newBindingContext);
             if (!boundSuccessfully && !string.IsNullOrEmpty(bindingContext.ModelName)
@@ -42,8 +46,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             {
                 // fallback to empty prefix?
                 newBindingContext = CreateNewBindingContext(bindingContext,
-                                                            modelName: string.Empty,
-                                                            reuseValidationNode: false);
+                                                            modelName: string.Empty);
                 boundSuccessfully = await TryBind(newBindingContext);
             }
 
@@ -52,30 +55,31 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 return false; // something went wrong
             }
 
-            // Only perform validation at the root of the object graph. ValidationNode will recursively walk the graph.
-            // Ignore ComplexModelDto since it essentially wraps the primary object.
-            if (newBindingContext.IsModelSet && IsBindingAtRootOfObjectGraph(newBindingContext))
-            {
-                // run validation and return the model
-                // If we fell back to an empty prefix above and are dealing with simple types,
-                // propagate the non-blank model name through for user clarity in validation errors.
-                // Complex types will reveal their individual properties as model names and do not require this.
-                if (!newBindingContext.ModelMetadata.IsComplexType &&
-                    string.IsNullOrEmpty(newBindingContext.ModelName))
-                {
-                    newBindingContext.ValidationNode = new ModelValidationNode(newBindingContext.ModelMetadata,
-                                                                               bindingContext.ModelName);
-                }
+    //        // Only perform validation at the root of the object graph. ValidationNode will recursively walk the graph.
+    //        // Ignore ComplexModelDto since it essentially wraps the primary object.
+    //        if (newBindingContext.IsModelSet && IsBindingAtRootOfObjectGraph(newBindingContext))
+    //        {
+                //var modelName = newBindingContext.ModelName;
+                //// run validation and return the model
+                //// If we fell back to an empty prefix above and are dealing with simple types,
+                //// propagate the non-blank model name through for user clarity in validation errors.
+                //// Complex types will reveal their individual properties as model names and do not require this.
+                //if (!newBindingContext.ModelMetadata.IsComplexType &&
+    //                string.IsNullOrEmpty(newBindingContext.ModelName))
+    //            {
+                //  modelName = bindingContext.ModelName;
+    //            }
 
-                var validationContext = new ModelValidationContext(
-                    bindingContext.OperationBindingContext.MetadataProvider,
-                    bindingContext.OperationBindingContext.ValidatorProvider,
-                    bindingContext.ModelState,
-                    bindingContext.ModelMetadata,
-                    containerMetadata: null);
+    //            var validationContext = new ModelValidationContext(
+    //                bindingContext.OperationBindingContext.MetadataProvider,
+    //                bindingContext.OperationBindingContext.ValidatorProvider,
+    //                bindingContext.ModelState,
+    //                bindingContext.ModelMetadata,
+    //                containerMetadata: null,
+    //                excludeFromValidationFilters: ValidationExcludeFilters);
 
-                newBindingContext.ValidationNode.Validate(validationContext, parentNode: null);
-            }
+    //            (new DefaultModelValidator()).Validate(validationContext, modelName);
+    //        }
 
             bindingContext.OperationBindingContext.BodyBindingState =
                 newBindingContext.OperationBindingContext.BodyBindingState;
@@ -115,8 +119,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         }
 
         private static ModelBindingContext CreateNewBindingContext(ModelBindingContext oldBindingContext,
-                                                                   string modelName,
-                                                                   bool reuseValidationNode)
+                                                                   string modelName)
         {
             var newBindingContext = new ModelBindingContext
             {
@@ -128,12 +131,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 OperationBindingContext = oldBindingContext.OperationBindingContext,
                 PropertyFilter = oldBindingContext.PropertyFilter,
             };
-
-            // validation is expensive to create, so copy it over if we can
-            if (reuseValidationNode)
-            {
-                newBindingContext.ValidationNode = oldBindingContext.ValidationNode;
-            }
 
             newBindingContext.OperationBindingContext.BodyBindingState = GetBodyBindingState(oldBindingContext);
 

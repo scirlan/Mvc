@@ -419,7 +419,7 @@ namespace System.Web.Http
 
             var bodyValidationExcludeFiltersProvider = Context.RequestServices
                                                               .GetRequiredService<IValidationExcludeFiltersProvider>();
-            var validator = Context.RequestServices.GetRequiredService<IBodyModelValidator>();
+            var validator = new DefaultModelValidator();
 
             var modelValidationContext = new ModelValidationContext(
                 MetadataProvider,

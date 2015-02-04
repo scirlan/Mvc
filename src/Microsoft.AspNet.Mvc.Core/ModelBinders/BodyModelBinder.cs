@@ -19,7 +19,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         private readonly ActionContext _actionContext;
         private readonly IScopedInstance<ActionBindingContext> _bindingContext;
         private readonly IInputFormatterSelector _formatterSelector;
-        private readonly IBodyModelValidator _bodyModelValidator;
         private readonly IValidationExcludeFiltersProvider _bodyValidationExcludeFiltersProvider;
 
         /// <summary>
@@ -35,14 +34,12 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         public BodyModelBinder([NotNull] IScopedInstance<ActionContext> context,
                                [NotNull] IScopedInstance<ActionBindingContext> bindingContext,
                                [NotNull] IInputFormatterSelector selector,
-                               [NotNull] IBodyModelValidator bodyModelValidator,
                                [NotNull] IValidationExcludeFiltersProvider bodyValidationExcludeFiltersProvider)
             : base(BindingSource.Body)
         {
             _actionContext = context.Value;
             _bindingContext = bindingContext;
             _formatterSelector = selector;
-            _bodyModelValidator = bodyModelValidator;
             _bodyValidationExcludeFiltersProvider = bodyValidationExcludeFiltersProvider;
         }
 
@@ -63,16 +60,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             }
 
             bindingContext.Model = await formatter.ReadAsync(formatterContext);
-
-            // Validate the deserialized object
-            var validationContext = new ModelValidationContext(
-                bindingContext.OperationBindingContext.MetadataProvider,
-                bindingContext.OperationBindingContext.ValidatorProvider,
-                bindingContext.ModelState,
-                bindingContext.ModelMetadata,
-                containerMetadata: null,
-                excludeFromValidationFilters: _bodyValidationExcludeFiltersProvider.ExcludeFilters);
-            _bodyModelValidator.Validate(validationContext, bindingContext.ModelName);
         }
     }
 }

@@ -16,6 +16,7 @@ namespace Microsoft.AspNet.Mvc
         private readonly ControllerActionDescriptor _descriptor;
         private readonly IControllerFactory _controllerFactory;
         private readonly IControllerActionArgumentBinder _argumentBinder;
+        private readonly IControllerActionArgumentValidator _controllerActionArgumentValidator;
 
         public ControllerActionInvoker(
             [NotNull] ActionContext actionContext,
@@ -27,6 +28,7 @@ namespace Microsoft.AspNet.Mvc
             [NotNull] IModelBinderProvider modelBinderProvider,
             [NotNull] IModelValidatorProviderProvider modelValidatorProviderProvider,
             [NotNull] IValueProviderFactoryProvider valueProviderFactoryProvider,
+            [NotNull] IControllerActionArgumentValidator controllerActionArgumentValidator,
             [NotNull] IScopedInstance<ActionBindingContext> actionBindingContextAccessor)
             : base(
                   actionContext, 
@@ -40,7 +42,7 @@ namespace Microsoft.AspNet.Mvc
             _descriptor = descriptor;
             _controllerFactory = controllerFactory;
             _argumentBinder = controllerActionArgumentBinder;
-
+            _controllerActionArgumentValidator = controllerActionArgumentValidator;
             if (descriptor.MethodInfo == null)
             {
                 throw new ArgumentException(
@@ -81,6 +83,14 @@ namespace Microsoft.AspNet.Mvc
             ActionBindingContext bindingContext)
         {
             return _argumentBinder.GetActionArgumentsAsync(context, bindingContext);
+        }
+
+        protected override Task ValidateActionArgumentsAsync(
+            ActionContext context, 
+            ActionBindingContext bindingContext, 
+            IDictionary<string, object> actionArguments)
+        {
+            return _controllerActionArgumentValidator.ValidateArgumentsAsync(context, bindingContext, actionArguments);
         }
 
         // Marking as internal for Unit Testing purposes.

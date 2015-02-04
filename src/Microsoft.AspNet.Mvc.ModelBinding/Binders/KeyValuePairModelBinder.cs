@@ -40,7 +40,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             {
                 var untypedModel = propertyBindingContext.Model;
                 var model = ModelBindingHelper.CastOrDefault<TModel>(untypedModel);
-                parentBindingContext.ValidationNode.ChildNodes.Add(propertyBindingContext.ValidationNode);
                 return new BindResult<TModel>(success: true, model: model);
             }
 

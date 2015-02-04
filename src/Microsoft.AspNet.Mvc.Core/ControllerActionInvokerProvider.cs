@@ -17,6 +17,7 @@ namespace Microsoft.AspNet.Mvc
         private readonly IModelValidatorProviderProvider _modelValidationProviderProvider;
         private readonly IValueProviderFactoryProvider _valueProviderFactoryProvider;
         private readonly IScopedInstance<ActionBindingContext> _actionBindingContextAccessor;
+        private readonly IControllerActionArgumentValidator _controllerActionArgumentValidator;
 
         public ControllerActionInvokerProvider(
             IControllerFactory controllerFactory,
@@ -26,6 +27,7 @@ namespace Microsoft.AspNet.Mvc
             IModelBinderProvider modelBinderProvider,
             IModelValidatorProviderProvider modelValidationProviderProvider,
             IValueProviderFactoryProvider valueProviderFactoryProvider,
+            IControllerActionArgumentValidator controllerActionArgumentValidator,
             IScopedInstance<ActionBindingContext> actionBindingContextAccessor)
         {
             _controllerFactory = controllerFactory;
@@ -36,6 +38,7 @@ namespace Microsoft.AspNet.Mvc
             _modelValidationProviderProvider = modelValidationProviderProvider;
             _valueProviderFactoryProvider = valueProviderFactoryProvider;
             _actionBindingContextAccessor = actionBindingContextAccessor;
+            _controllerActionArgumentValidator = controllerActionArgumentValidator;
         }
 
         public int Order
@@ -59,6 +62,7 @@ namespace Microsoft.AspNet.Mvc
                                     _modelBinderProvider,
                                     _modelValidationProviderProvider,
                                     _valueProviderFactoryProvider,
+                                    _controllerActionArgumentValidator,
                                     _actionBindingContextAccessor);
             }
 

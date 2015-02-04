@@ -17,7 +17,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
 
         private string _modelName;
         private ModelStateDictionary _modelState;
-        private ModelValidationNode _validationNode;
         private Func<ModelBindingContext, string, bool> _propertyFilter;
 
         /// <summary>
@@ -162,23 +161,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 return _propertyFilter;
             }
             set { _propertyFilter = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets the <see cref="ModelValidationNode"/> instance used as a container for
-        /// validation information.
-        /// </summary>
-        public ModelValidationNode ValidationNode
-        {
-            get
-            {
-                if (_validationNode == null)
-                {
-                    _validationNode = new ModelValidationNode(ModelMetadata, ModelName);
-                }
-                return _validationNode;
-            }
-            set { _validationNode = value; }
         }
 
         private void EnsureModelMetadata()

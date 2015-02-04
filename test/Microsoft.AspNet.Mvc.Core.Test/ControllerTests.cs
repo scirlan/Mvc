@@ -13,6 +13,8 @@ using Microsoft.AspNet.Mvc.ModelBinding;
 using Microsoft.AspNet.Routing;
 using Microsoft.AspNet.Testing;
 using Microsoft.AspNet.WebUtilities;
+using Microsoft.AspNet.Http.Core;
+using Microsoft.Framework.DependencyInjection;
 #if ASPNET50
 using Moq;
 #endif
@@ -1336,7 +1338,12 @@ namespace Microsoft.AspNet.Mvc.Test
         private static Controller GetController(IModelBinder binder, IValueProvider provider)
         {
             var metadataProvider = new DataAnnotationsModelMetadataProvider();
-            var actionContext = new ActionContext(Mock.Of<HttpContext>(), new RouteData(), new ActionDescriptor());
+            var httpContext = new DefaultHttpContext();
+            var services = new Mock<IServiceProvider>();
+            services.Setup(p => p.GetService(typeof(IValidationExcludeFiltersProvider)))
+                    .Returns(Mock.Of<IValidationExcludeFiltersProvider>());
+            httpContext.RequestServices = services.Object;
+            var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
 
             var viewData = new ViewDataDictionary(metadataProvider, new ModelStateDictionary());
 
@@ -1344,6 +1351,7 @@ namespace Microsoft.AspNet.Mvc.Test
             {
                 ModelBinder = binder,
                 ValueProvider = provider,
+                ValidatorProvider = new DataAnnotationsModelValidatorProvider()
             };
 
             return new Controller()
@@ -1351,7 +1359,8 @@ namespace Microsoft.AspNet.Mvc.Test
                 ActionContext = actionContext,
                 BindingContext = bindingContext,
                 MetadataProvider = metadataProvider,
-                ViewData = viewData
+                ViewData = viewData,
+                ObjectValidator = new DefaultObjectValidator()
             };
         }
 

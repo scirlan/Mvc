@@ -21,6 +21,7 @@
     },
     "aspnetcore50": {
       "dependencies": {
+        "Microsoft.CSharp": "4.0.0-beta-*",
         "System.Collections.Concurrent": "4.0.10-beta-*",
         "System.ComponentModel.Annotations": "4.0.10-beta-*",
         "System.ComponentModel.TypeConverter": "4.0.0-beta-*",

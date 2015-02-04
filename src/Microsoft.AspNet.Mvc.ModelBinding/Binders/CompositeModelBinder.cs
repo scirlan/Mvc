@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Microsoft.Framework.DependencyInjection;
 
 namespace Microsoft.AspNet.Mvc.ModelBinding
 {
@@ -33,8 +34,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         public virtual async Task<bool> BindModelAsync([NotNull] ModelBindingContext bindingContext)
         {
             var newBindingContext = CreateNewBindingContext(bindingContext,
-                                                            bindingContext.ModelName,
-                                                            reuseValidationNode: true);
+                                                            bindingContext.ModelName);
 
             var boundSuccessfully = await TryBind(newBindingContext);
             if (!boundSuccessfully && !string.IsNullOrEmpty(bindingContext.ModelName)
@@ -42,8 +42,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             {
                 // fallback to empty prefix?
                 newBindingContext = CreateNewBindingContext(bindingContext,
-                                                            modelName: string.Empty,
-                                                            reuseValidationNode: false);
+                                                            modelName: string.Empty);
                 boundSuccessfully = await TryBind(newBindingContext);
             }
 
@@ -52,37 +51,20 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 return false; // something went wrong
             }
 
-            // Only perform validation at the root of the object graph. ValidationNode will recursively walk the graph.
-            // Ignore ComplexModelDto since it essentially wraps the primary object.
-            if (newBindingContext.IsModelSet && IsBindingAtRootOfObjectGraph(newBindingContext))
-            {
-                // run validation and return the model
-                // If we fell back to an empty prefix above and are dealing with simple types,
-                // propagate the non-blank model name through for user clarity in validation errors.
-                // Complex types will reveal their individual properties as model names and do not require this.
-                if (!newBindingContext.ModelMetadata.IsComplexType &&
-                    string.IsNullOrEmpty(newBindingContext.ModelName))
-                {
-                    newBindingContext.ValidationNode = new ModelValidationNode(newBindingContext.ModelMetadata,
-                                                                               bindingContext.ModelName);
-                }
-
-                var validationContext = new ModelValidationContext(
-                    bindingContext.OperationBindingContext.MetadataProvider,
-                    bindingContext.OperationBindingContext.ValidatorProvider,
-                    bindingContext.ModelState,
-                    bindingContext.ModelMetadata,
-                    containerMetadata: null);
-
-                newBindingContext.ValidationNode.Validate(validationContext, parentNode: null);
-            }
-
             bindingContext.OperationBindingContext.BodyBindingState =
                 newBindingContext.OperationBindingContext.BodyBindingState;
 
             if (newBindingContext.IsModelSet)
             {
                 bindingContext.Model = newBindingContext.Model;
+
+                // Update the model state key if we are bound using an empty prefix and it is a complex type.
+                // This is needed as validation uses the model state key to log errors. The client validation expects
+                // the erros with property names rather than the full name.
+                if (newBindingContext.ModelMetadata.IsComplexType && string.IsNullOrEmpty(newBindingContext.ModelName))
+                {
+                    bindingContext.ModelStateKey = newBindingContext.ModelStateKey;
+                }
             }
 
             return true;
@@ -104,19 +86,8 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             return false;
         }
 
-        private static bool IsBindingAtRootOfObjectGraph(ModelBindingContext bindingContext)
-        {
-            // We're at the root of the object graph if the model does does not have a container.
-            // This statement is true for complex types at the root twice over - once with the actual model
-            // and once when when it is represented by a ComplexModelDto. Ignore the latter case.
-
-            return bindingContext.ModelMetadata.ContainerType == null &&
-                   bindingContext.ModelMetadata.ModelType != typeof(ComplexModelDto);
-        }
-
         private static ModelBindingContext CreateNewBindingContext(ModelBindingContext oldBindingContext,
-                                                                   string modelName,
-                                                                   bool reuseValidationNode)
+                                                                   string modelName)
         {
             var newBindingContext = new ModelBindingContext
             {
@@ -128,12 +99,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 OperationBindingContext = oldBindingContext.OperationBindingContext,
                 PropertyFilter = oldBindingContext.PropertyFilter,
             };
-
-            // validation is expensive to create, so copy it over if we can
-            if (reuseValidationNode)
-            {
-                newBindingContext.ValidationNode = oldBindingContext.ValidationNode;
-            }
 
             newBindingContext.OperationBindingContext.BodyBindingState = GetBodyBindingState(oldBindingContext);
 

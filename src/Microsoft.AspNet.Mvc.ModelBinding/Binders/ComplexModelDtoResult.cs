@@ -7,23 +7,23 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
     {
         public static ComplexModelDtoResult FromBindingContext([NotNull] ModelBindingContext context)
         {
-            return new ComplexModelDtoResult(context.Model, context.IsModelSet, context.ValidationNode);
+            return new ComplexModelDtoResult(context.Model, context.IsModelSet, context.ModelName);
         }
 
         public ComplexModelDtoResult(
             object model,
             bool isModelBound,
-            [NotNull] ModelValidationNode validationNode)
+            string modelStateKey)
         {
+            ModelStateKey = modelStateKey;
             Model = model;
             IsModelBound = isModelBound;
-            ValidationNode = validationNode;
         }
+
+        public string ModelStateKey { get; set; }
 
         public bool IsModelBound { get; }
 
         public object Model { get; set; }
-
-        public ModelValidationNode ValidationNode { get; set; }
     }
 }

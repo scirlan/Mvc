@@ -16,11 +16,9 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
     public class CompositeModelBinderTest
     {
         [Fact]
-        public async Task BindModel_SuccessfulBind_RunsValidationAndReturnsModel()
+        public async Task BindModel_SuccessfulBind_ReturnsModel()
         {
             // Arrange
-            var validationCalled = false;
-
             var bindingContext = new ModelBindingContext
             {
                 FallbackToEmptyPrefix = true,
@@ -48,7 +46,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
                         Assert.Same(bindingContext.ValueProvider, context.ValueProvider);
 
                         context.Model = 42;
-                        bindingContext.ValidationNode.Validating += delegate { validationCalled = true; };
                         return Task.FromResult(true);
                     });
             var shimBinder = CreateCompositeBinder(mockIntBinder.Object);
@@ -59,16 +56,12 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             // Assert
             Assert.True(isBound);
             Assert.Equal(42, bindingContext.Model);
-
-            Assert.True(validationCalled);
-            Assert.True(bindingContext.ModelState.IsValid);
         }
 
         [Fact]
-        public async Task BindModel_SuccessfulBind_ComplexTypeFallback_RunsValidationAndReturnsModel()
+        public async Task BindModel_SuccessfulBind_ComplexTypeFallback_ReturnsModel()
         {
             // Arrange
-            var validationCalled = false;
             var expectedModel = new List<int> { 1, 2, 3, 4, 5 };
 
             var bindingContext = new ModelBindingContext
@@ -103,7 +96,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
                         Assert.Same(bindingContext.ValueProvider, mbc.ValueProvider);
 
                         mbc.Model = expectedModel;
-                        mbc.ValidationNode.Validating += delegate { validationCalled = true; };
+                        //mbc.ValidationNode.Validating += delegate { validationCalled = true; };
                         return Task.FromResult(true);
                     });
 
@@ -115,15 +108,12 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             // Assert
             Assert.True(isBound);
             Assert.Equal(expectedModel, bindingContext.Model);
-            Assert.True(validationCalled);
-            Assert.True(bindingContext.ModelState.IsValid);
         }
 
         [Fact]
-        public async Task ModelBinder_ReturnsTrue_WithoutSettingValue_SkipsValidation()
+        public async Task ModelBinder_ReturnsTrue_WithoutSettingValue_DoesNotSetTheModelStateKey()
         {
             // Arrange
-            var validationCalled = false;
 
             var bindingContext = new ModelBindingContext
             {
@@ -144,10 +134,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             var modelBinder = new Mock<IModelBinder>();
             modelBinder
                 .Setup(mb => mb.BindModelAsync(It.IsAny<ModelBindingContext>()))
-                .Callback<ModelBindingContext>(context =>
-                {
-                    context.ValidationNode.Validating += delegate { validationCalled = true; };
-                })
                 .Returns(Task.FromResult(true));
 
             var composite = CreateCompositeBinder(modelBinder.Object);
@@ -159,16 +145,14 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             Assert.True(isBound);
 
             Assert.Null(bindingContext.Model);
-            Assert.False(validationCalled);
             Assert.False(bindingContext.IsModelSet);
-            Assert.True(bindingContext.ModelState.IsValid);
+            Assert.Null(bindingContext.ModelStateKey);
         }
 
         [Fact]
-        public async Task ModelBinder_ReturnsTrue_SetsNullValue_RunsValidation()
+        public async Task ModelBinder_ReturnsTrue_SetsNullValue_SetsModelStateKey()
         {
             // Arrange
-            var validationCalled = false;
 
             var bindingContext = new ModelBindingContext
             {
@@ -192,7 +176,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
                 .Callback<ModelBindingContext>(context =>
                 {
                     context.Model = null;
-                    context.ValidationNode.Validating += delegate { validationCalled = true; };
                 })
                 .Returns(Task.FromResult(true));
 
@@ -205,9 +188,8 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             Assert.True(isBound);
 
             Assert.Null(bindingContext.Model);
-            Assert.True(validationCalled);
             Assert.True(bindingContext.IsModelSet);
-            Assert.False(bindingContext.ModelState.IsValid);
+            Assert.Equal("someName", bindingContext.ModelStateKey);
         }
 
         [Fact]
@@ -319,81 +301,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             Assert.Equal("name", model.Friends[1].LastName);
             Assert.Equal(new byte[] { 227, 233, 133, 121, 58, 119, 180, 241 }, model.Resume);
         }
-
-        [Fact]
-        public async Task BindModel_WithDefaultValidators_ValidatesSubProperties()
-        {
-            // Arrange
-            var validatorProvider = new DataAnnotationsModelValidatorProvider();
-            var binder = CreateBinderWithDefaults();
-            var valueProvider = new SimpleHttpValueProvider
-            {
-                { "user.password", "password-val" },
-                { "user.confirmpassword", "not-password-val" },
-            };
-            var bindingContext = CreateBindingContext(binder, valueProvider, typeof(User), validatorProvider);
-            bindingContext.ModelName = "user";
-
-            // Act
-            var isBound = await binder.BindModelAsync(bindingContext);
-
-            // Assert
-            var error = Assert.Single(bindingContext.ModelState["user.confirmpassword"].Errors);
-            Assert.Equal("'ConfirmPassword' and 'Password' do not match.", error.ErrorMessage);
-        }
-
-        [Fact]
-        public async Task BindModel_WithDefaultValidators_ValidatesInstance()
-        {
-            // Arrange
-            var validatorProvider = new DataAnnotationsModelValidatorProvider();
-            var binder = CreateBinderWithDefaults();
-            var valueProvider = new SimpleHttpValueProvider
-            {
-                { "user.password", "password" },
-                { "user.confirmpassword", "password" },
-            };
-            var bindingContext = CreateBindingContext(binder, valueProvider, typeof(User), validatorProvider);
-            bindingContext.ModelName = "user";
-
-            // Act
-            var isBound = await binder.BindModelAsync(bindingContext);
-
-            // Assert
-            var error = Assert.Single(bindingContext.ModelState["user"].Errors);
-            Assert.Equal("Password does not meet complexity requirements.", error.ErrorMessage);
-        }
-
-        [Fact]
-        public async Task BindModel_UsesTryAddModelError()
-        {
-            // Arrange
-            var validatorProvider = new DataAnnotationsModelValidatorProvider();
-            var binder = CreateBinderWithDefaults();
-            var valueProvider = new SimpleHttpValueProvider
-            {
-                { "user.password", "password" },
-                { "user.confirmpassword", "password2" },
-            };
-            var bindingContext = CreateBindingContext(binder, valueProvider, typeof(User), validatorProvider);
-            bindingContext.ModelState.MaxAllowedErrors = 2;
-            bindingContext.ModelState.AddModelError("key1", "error1");
-            bindingContext.ModelName = "user";
-
-            // Act
-            await binder.BindModelAsync(bindingContext);
-
-            // Assert
-            var modelState = bindingContext.ModelState["user.confirmpassword"];
-            Assert.Empty(modelState.Errors);
-
-            modelState = bindingContext.ModelState["user"];
-            Assert.Empty(modelState.Errors);
-
-            var error = Assert.Single(bindingContext.ModelState[""].Errors);
-            Assert.IsType<TooManyModelErrorsException>(error.Exception);
-        }
-
 
         private static ModelBindingContext CreateBindingContext(IModelBinder binder,
                                                                 IValueProvider valueProvider,

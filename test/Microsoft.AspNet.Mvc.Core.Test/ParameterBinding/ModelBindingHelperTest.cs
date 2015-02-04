@@ -42,6 +42,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     metadataProvider.Object,
                                                     GetCompositeBinder(binder.Object),
                                                     Mock.Of<IValueProvider>(),
+                                                    new DefaultObjectValidator(),
                                                     Mock.Of<IModelValidatorProvider>());
 
             // Assert
@@ -81,6 +82,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     new DataAnnotationsModelMetadataProvider(),
                                                     GetCompositeBinder(binders),
                                                     valueProvider,
+                                                    new DefaultObjectValidator(),
                                                     validator);
 
             // Assert
@@ -119,6 +121,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     new DataAnnotationsModelMetadataProvider(),
                                                     GetCompositeBinder(binders),
                                                     valueProvider,
+                                                    new DefaultObjectValidator(),
                                                     validator);
 
             // Assert
@@ -150,6 +153,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     metadataProvider.Object,
                                                     GetCompositeBinder(binder.Object),
                                                     Mock.Of<IValueProvider>(),
+                                                    Mock.Of<IObjectModelValidator>(),
                                                     Mock.Of<IModelValidatorProvider>(),
                                                     includePredicate);
 
@@ -204,6 +208,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     new DataAnnotationsModelMetadataProvider(),
                                                     GetCompositeBinder(binders),
                                                     valueProvider,
+                                                    new DefaultObjectValidator(),
                                                     validator,
                                                     includePredicate);
 
@@ -237,6 +242,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     metadataProvider.Object,
                                                     GetCompositeBinder(binder.Object),
                                                     Mock.Of<IValueProvider>(),
+                                                    Mock.Of<IObjectModelValidator>(),
                                                     Mock.Of<IModelValidatorProvider>(),
                                                     m => m.IncludedProperty );
 
@@ -287,6 +293,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     new DataAnnotationsModelMetadataProvider(),
                                                     GetCompositeBinder(binders),
                                                     valueProvider,
+                                                    new DefaultObjectValidator(),
                                                     validator,
                                                     m => m.IncludedProperty,
                                                     m => m.MyProperty);
@@ -337,6 +344,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     new DataAnnotationsModelMetadataProvider(),
                                                     GetCompositeBinder(binders),
                                                     valueProvider,
+                                                    new DefaultObjectValidator(),
                                                     validator);
 
             // Assert

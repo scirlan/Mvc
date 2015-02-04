@@ -9,6 +9,53 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
 {
     public class ModelStateDictionaryTest
     {
+
+        [Fact]
+        public void MarkFieldSkipped_Throws_IfStateIsInvalid()
+        {
+            // Arrange
+            var modelState = new ModelState
+            {
+                Value = GetValueProviderResult("value"),
+                ValidationState = ModelValidationState.Invalid
+            };
+
+            var source = new ModelStateDictionary
+            {
+                { "key",  modelState }
+            };
+
+            // Act
+            var exception = Assert.Throws<InvalidOperationException>(() => source.MarkFieldSkipped("key"));
+            // Assert
+            Assert.Equal(
+                "A field previously marked invalid should not be marked skipped.",
+                exception.Message);
+        }
+
+        [Fact]
+        public void MarkFieldValid_Throws_IfStateIsInvalid()
+        {
+            // Arrange
+            var modelState = new ModelState
+            {
+                Value = GetValueProviderResult("value"),
+                ValidationState = ModelValidationState.Invalid
+            };
+
+            var source = new ModelStateDictionary
+            {
+                { "key",  modelState }
+            };
+
+            // Act
+            var exception = Assert.Throws<InvalidOperationException>(() => source.MarkFieldValid("key"));
+            // Assert
+            Assert.Equal(
+                "A field previously marked invalid should not be marked valid.",
+                exception.Message);
+        }
+
         [Fact]
         public void CopyConstructor_CopiesModelStateData()
         {
@@ -95,6 +142,20 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
 
             // Act
             var validationState = msd.GetFieldValidationState("foo");
+
+            // Assert
+            Assert.Equal(ModelValidationState.Unvalidated, validationState);
+        }
+
+        [Fact]
+        public void GetValidationState_ReturnsValidationStateForKey_IgnoresChildren()
+        {
+            // Arrange
+            var msd = new ModelStateDictionary();
+            msd.AddModelError("foo.bar", "error text");
+
+            // Act
+            var validationState = msd.GetValidationState("foo");
 
             // Assert
             Assert.Equal(ModelValidationState.Unvalidated, validationState);
@@ -193,7 +254,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 },
                 { "baz", new ModelState
                          {
-                             ValidationState = ModelValidationState.Valid,
+                             ValidationState = ModelValidationState.Skipped,
                              Value = GetValueProviderResult("quux", "bar")
                          }
                 }

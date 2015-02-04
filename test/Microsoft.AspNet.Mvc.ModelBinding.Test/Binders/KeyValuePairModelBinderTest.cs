@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 #if ASPNET50
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Moq;
@@ -13,28 +15,13 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
     public class KeyValuePairModelBinderTest
     {
         [Fact]
-        public async Task BindModel_MissingKey_ReturnsFalse()
+        public async Task BindModel_MissingKey_ReturnsTrue_AndAddsModelValidationError()
         {
             // Arrange
             var valueProvider = new SimpleHttpValueProvider();
-            var bindingContext = GetBindingContext(valueProvider, Mock.Of<IModelBinder>());
-            var binder = new KeyValuePairModelBinder<int, string>();
 
-            // Act
-            bool retVal = await binder.BindModelAsync(bindingContext);
-
-            // Assert
-            Assert.False(retVal);
-            Assert.Null(bindingContext.Model);
-            Assert.Empty(bindingContext.ValidationNode.ChildNodes);
-        }
-
-        [Fact]
-        public async Task BindModel_MissingValue_ReturnsTrue()
-        {
-            // Arrange
-            var valueProvider = new SimpleHttpValueProvider();
-            var bindingContext = GetBindingContext(valueProvider);
+            // Create string binder to create the value but not the key.
+            var bindingContext = GetBindingContext(valueProvider, CreateStringBinder());
             var binder = new KeyValuePairModelBinder<int, string>();
 
             // Act
@@ -43,7 +30,51 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             // Assert
             Assert.True(retVal);
             Assert.Null(bindingContext.Model);
-            Assert.Equal(new[] { "someName.key" }, bindingContext.ValidationNode.ChildNodes.Select(n => n.ModelStateKey).ToArray());
+            Assert.False(bindingContext.ModelState.IsValid);
+            Assert.Equal("someName", bindingContext.ModelName);
+            Assert.Equal(bindingContext.ModelState["someName.Key"].Errors.First().ErrorMessage, "A value is required.");
+        }
+
+        [Fact]
+        public async Task BindModel_MissingValue_ReturnsTrue_AndAddsModelValidationError()
+        {
+            // Arrange
+            var valueProvider = new SimpleHttpValueProvider();
+
+            // Create int binder to create the value but not the key.
+            var bindingContext = GetBindingContext(valueProvider, CreateIntBinder());
+            var binder = new KeyValuePairModelBinder<int, string>();
+
+            // Act
+            bool retVal = await binder.BindModelAsync(bindingContext);
+
+            // Assert
+            Assert.True(retVal);
+            Assert.Null(bindingContext.Model);
+            Assert.False(bindingContext.ModelState.IsValid);
+            Assert.Equal("someName", bindingContext.ModelName);
+            Assert.Equal(bindingContext.ModelState["someName.Value"].Errors.First().ErrorMessage, "A value is required.");
+        }
+
+        [Fact]
+        public async Task BindModel_MissingKyAndMissingValue_DoNotAddModelStateError()
+        {
+            // Arrange
+            var valueProvider = new SimpleHttpValueProvider();
+
+            // Create int binder to create the value but not the key.
+            var bindingContext = GetBindingContext(valueProvider, CreateIntBinder());
+            var binder = new KeyValuePairModelBinder<int, string>();
+
+            // Act
+            bool retVal = await binder.BindModelAsync(bindingContext);
+
+            // Assert
+            Assert.True(retVal);
+            Assert.Null(bindingContext.Model);
+            Assert.False(bindingContext.ModelState.IsValid);
+            Assert.Equal("someName", bindingContext.ModelName);
+            Assert.Empty(bindingContext.ModelState["someName.Value"].Errors);
         }
 
         [Fact]
@@ -62,7 +93,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             // Assert
             Assert.True(retVal);
             Assert.Equal(new KeyValuePair<int, string>(42, "some-value"), bindingContext.Model);
-            Assert.Equal(new[] { "someName.key", "someName.value" }, bindingContext.ValidationNode.ChildNodes.Select(n => n.ModelStateKey).ToArray());
         }
 
         [Fact]
@@ -78,7 +108,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             // Assert
             Assert.True(retVal.Success);
             Assert.Equal(42, retVal.Model);
-            Assert.Single(bindingContext.ValidationNode.ChildNodes);
             Assert.Empty(bindingContext.ModelState);
         }
 
@@ -105,23 +134,25 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             // Assert
             Assert.True(retVal.Success);
             Assert.Equal(default(int), retVal.Model);
-            Assert.Single(bindingContext.ValidationNode.ChildNodes);
             Assert.Empty(bindingContext.ModelState);
         }
 
-        private static ModelBindingContext GetBindingContext(IValueProvider valueProvider, IModelBinder innerBinder = null)
+        private static ModelBindingContext GetBindingContext(
+            IValueProvider valueProvider,
+            IModelBinder innerBinder = null,
+            Type keyValuePairType = null)
         {
             var metataProvider = new EmptyModelMetadataProvider();
             var bindingContext = new ModelBindingContext
             {
-                ModelMetadata = metataProvider.GetMetadataForType(null, typeof(KeyValuePair<int, string>)),
+                ModelMetadata = metataProvider.GetMetadataForType(null, keyValuePairType ?? typeof(KeyValuePair<int, string>)),
                 ModelName = "someName",
                 ValueProvider = valueProvider,
                 OperationBindingContext = new OperationBindingContext
                 {
                     ModelBinder = innerBinder ?? CreateIntBinder(),
                     MetadataProvider = metataProvider,
-                    ValidatorProvider = Mock.Of<IModelValidatorProvider>()
+                    ValidatorProvider = new DataAnnotationsModelValidatorProvider()
                 }
             };
             return bindingContext;

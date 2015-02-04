@@ -40,7 +40,6 @@ namespace Microsoft.AspNet.Mvc
             _descriptor = descriptor;
             _controllerFactory = controllerFactory;
             _argumentBinder = controllerActionArgumentBinder;
-
             if (descriptor.MethodInfo == null)
             {
                 throw new ArgumentException(

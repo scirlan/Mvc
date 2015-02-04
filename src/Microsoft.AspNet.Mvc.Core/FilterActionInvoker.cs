@@ -200,7 +200,6 @@ namespace Microsoft.AspNet.Mvc
 
             context.InputFormatters = new List<IInputFormatter>(_inputFormatterProvider.InputFormatters);
             context.ModelBinders = new List<IModelBinder>(_modelBinderProvider.ModelBinders);
-
             context.ValidatorProviders = new List<IModelValidatorProvider>(
                 _modelValidatorProviderProvider.ModelValidatorProviders);
 

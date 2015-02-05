@@ -70,11 +70,13 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             set
             {
                 IsModelSet = true;
-
+                ModelStateKey = ModelName;
                 EnsureModelMetadata();
                 ModelMetadata.Model = value;
             }
         }
+
+        public string ModelStateKey { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see cref="Model"/> value has been set.

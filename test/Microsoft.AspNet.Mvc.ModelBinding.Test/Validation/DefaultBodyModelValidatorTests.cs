@@ -215,7 +215,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             var validationContext = GetModelValidationContext(model, type);
 
             // Act (does not throw)
-            new DefaultBodyModelValidator().Validate(validationContext, keyPrefix: string.Empty);
+            new DefaultModelValidator().Validate(validationContext, modelStatePrefix: string.Empty);
 
             // Assert
             var actualErrors = new Dictionary<string, string>();
@@ -247,7 +247,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 typeof(InvalidOperationException),
                 () =>
                 {
-                    new DefaultBodyModelValidator().Validate(validationContext, keyPrefix: string.Empty);
+                    new DefaultModelValidator().Validate(validationContext, modelStatePrefix: string.Empty);
                 });
         }
 
@@ -277,7 +277,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             var validationContext = GetModelValidationContext(input, type, excludedTypes);
 
             // Act & Assert (does not throw)
-            new DefaultBodyModelValidator().Validate(validationContext, keyPrefix: string.Empty);
+            new DefaultModelValidator().Validate(validationContext, modelStatePrefix: string.Empty);
             Assert.True(validationContext.ModelState.IsValid);
         }
 
@@ -293,7 +293,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             Assert.Throws<InvalidOperationException>(
                 () =>
                 {
-                    new DefaultBodyModelValidator().Validate(validationContext, keyPrefix: string.Empty);
+                    new DefaultModelValidator().Validate(validationContext, modelStatePrefix: string.Empty);
                 });
             Assert.True(validationContext.ModelState.IsValid);
         }
@@ -307,7 +307,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             var validationContext = GetModelValidationContext(model, model.GetType());
 
             // Act (does not throw)
-            new DefaultBodyModelValidator().Validate(validationContext, keyPrefix: string.Empty);
+            new DefaultModelValidator().Validate(validationContext, modelStatePrefix: string.Empty);
 
             // Assert
             Assert.Contains("Street", validationContext.ModelState.Keys);
@@ -329,7 +329,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             var validationContext = GetModelValidationContext(instance, typeof(TypeThatOverridesEquals[]));
 
             // Act & Assert (does not throw)
-            new DefaultBodyModelValidator().Validate(validationContext, keyPrefix: string.Empty);
+            new DefaultModelValidator().Validate(validationContext, modelStatePrefix: string.Empty);
         }
 
         private ModelValidationContext GetModelValidationContext(

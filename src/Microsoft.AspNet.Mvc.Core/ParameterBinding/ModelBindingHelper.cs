@@ -40,6 +40,7 @@ namespace Microsoft.AspNet.Mvc
                 [NotNull] IModelMetadataProvider metadataProvider,
                 [NotNull] IModelBinder modelBinder,
                 [NotNull] IValueProvider valueProvider,
+                [NotNull] IObjectModelValidator objectModelValidator,
                 [NotNull] IModelValidatorProvider validatorProvider)
             where TModel : class
         {
@@ -52,6 +53,7 @@ namespace Microsoft.AspNet.Mvc
                 metadataProvider,
                 modelBinder,
                 valueProvider,
+                objectModelValidator,
                 validatorProvider,
                 predicate: (context, propertyName) => true);
         }
@@ -85,6 +87,7 @@ namespace Microsoft.AspNet.Mvc
                [NotNull] IModelMetadataProvider metadataProvider,
                [NotNull] IModelBinder modelBinder,
                [NotNull] IValueProvider valueProvider,
+               [NotNull] IObjectModelValidator objectModelValidator,
                [NotNull] IModelValidatorProvider validatorProvider,
                [NotNull] params Expression<Func<TModel, object>>[] includeExpressions)
            where TModel : class
@@ -100,6 +103,7 @@ namespace Microsoft.AspNet.Mvc
                metadataProvider,
                modelBinder,
                valueProvider,
+               objectModelValidator,
                validatorProvider,
                predicate: predicate);
         }
@@ -132,6 +136,7 @@ namespace Microsoft.AspNet.Mvc
                [NotNull] IModelMetadataProvider metadataProvider,
                [NotNull] IModelBinder modelBinder,
                [NotNull] IValueProvider valueProvider,
+               [NotNull] IObjectModelValidator objectModelValidator,
                [NotNull] IModelValidatorProvider validatorProvider,
                [NotNull] Func<ModelBindingContext, string, bool> predicate)
            where TModel : class
@@ -162,6 +167,8 @@ namespace Microsoft.AspNet.Mvc
 
             if (await modelBinder.BindModelAsync(modelBindingContext))
             {
+                var modelValidationContext = new ModelValidationContext(modelBindingContext, modelMetadata);
+                objectModelValidator.Validate(modelValidationContext, prefix);
                 return modelState.IsValid;
             }
 

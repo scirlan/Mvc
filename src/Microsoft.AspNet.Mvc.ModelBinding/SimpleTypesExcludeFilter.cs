@@ -39,11 +39,19 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
 
             foreach (var actualType in actualTypes)
             {
+                if (actualType == typeof(Type))
+                {
+                    System.Console.WriteLine(IsSimpleType(actualType));
+                }
                 var underlyingType = Nullable.GetUnderlyingType(actualType) ?? actualType;
-
                 if (!IsSimpleType(underlyingType))
                 {
                     return false;
+                }
+
+                if (underlyingType == typeof(Type))
+                {
+                    System.Console.WriteLine(IsSimpleType(underlyingType));
                 }
             }
 

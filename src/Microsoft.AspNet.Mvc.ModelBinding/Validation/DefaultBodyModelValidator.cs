@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNet.Mvc.ModelBinding.Internal;
 
@@ -14,10 +15,10 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
     /// <summary>
     /// Recursively validate an object.
     /// </summary>
-    public class DefaultModelValidator
+    public class DefaultModelValidator : IObjectModelValidator
     {
         /// <inheritdoc />
-        public bool Validate([NotNull] ModelValidationContext modelValidationContext, string keyPrefix)
+        public bool Validate([NotNull] ModelValidationContext modelValidationContext, string modelStatePrefix)
         {
             var metadata = modelValidationContext.ModelMetadata;
             var validationContext = new ValidationContext()
@@ -26,7 +27,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 Visited = new HashSet<object>(ReferenceEqualityComparer.Instance),
             };
 
-            return ValidateNonVisitedNodeAndChildren(keyPrefix, metadata, validationContext, validators: null);
+            return ValidateNonVisitedNodeAndChildren(modelStatePrefix, metadata, validationContext, validators: null);
         }
 
         private bool ValidateNonVisitedNodeAndChildren(string modelKey,
@@ -57,7 +58,8 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 validationContext.ModelValidationContext.ExcludeFromValidationFilters,
                 modelType))
             {
-                return ShallowValidate(modelKey, metadata, validationContext, validators);
+                ShallowValidate(modelKey, metadata, validationContext, validators);
+                MarkPropertiesAsSkipped(modelKey, metadata, validationContext);
             }
 
             // Check to avoid infinite recursion. This can happen with cycles in an object graph.
@@ -88,6 +90,31 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             // Pop the object so that it can be validated again in a different path
             validationContext.Visited.Remove(metadata.Model);
             return isValid;
+        }
+
+        private void MarkPropertiesAsSkipped(string currentModelKey, ModelMetadata metadata, ValidationContext validationContext)
+        {
+            var modelState = validationContext.ModelValidationContext.ModelState;
+            var currentModelState = modelState.GetFieldValidationState(currentModelKey);
+            if (currentModelState != ModelValidationState.Unvalidated)
+            {
+                // There are no sub properties which we need to take a look at.
+                // Either the tree under current node is valid or invalid or there is no entry in the model state.
+                // In all these cases we need not mark properties.
+                return;
+            }
+
+            foreach (var childMetadata in metadata.Properties)
+            {
+                var childKey = ModelBindingHelper.CreatePropertyModelName(currentModelKey, childMetadata.PropertyName);
+
+                var validationState = modelState.GetFieldValidationState(childKey);
+
+                if (validationState == ModelValidationState.Unvalidated)
+                {
+                    validationContext.ModelValidationContext.ModelState.MarkFiledSkipped(childKey);
+                }
+            }
         }
 
         private bool ValidateProperties(string currentModelKey, ModelMetadata metadata, ValidationContext validationContext)
@@ -149,7 +176,8 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             string modelKey,
             ModelMetadata metadata,
             ValidationContext validationContext,
-            [NotNull] IEnumerable<IModelValidator> validators)
+            [NotNull] IEnumerable<IModelValidator> validators, 
+            bool lookAtFields = true)
         {
             var isValid = true;
 
@@ -161,12 +189,12 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 var modelValidationContext =
                         new ModelValidationContext(validationContext.ModelValidationContext, metadata);
                 var modelState = validationContext.ModelValidationContext.ModelState;
-                var fieldValidationState = modelState.GetFieldValidationState(modelKey);
                 var modelValidationState = modelState.GetValidationState(modelKey);
+                var fieldValidationState = modelState.GetFieldValidationState(modelKey);
 
                 // If either the model or its properties are unvalidated, validate them now.
                 if (modelValidationState == ModelValidationState.Unvalidated ||
-                    fieldValidationState == ModelValidationState.Unvalidated)
+                    lookAtFields && fieldValidationState == ModelValidationState.Unvalidated)
                 {
                     foreach (var validator in validators)
                     {

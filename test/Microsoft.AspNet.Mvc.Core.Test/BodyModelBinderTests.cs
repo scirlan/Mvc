@@ -17,13 +17,9 @@ namespace Microsoft.AspNet.Mvc
     public class BodyModelBinderTests
     {
         [Fact]
-        public async Task BindModel_CallsValidationAndSelectedInputFormatterOnce()
+        public async Task BindModel_CallsSelectedInputFormatterOnce()
         {
             // Arrange
-            var mockValidator = new Mock<IBodyModelValidator>();
-            mockValidator.Setup(o => o.Validate(It.IsAny<ModelValidationContext>(), It.IsAny<string>()))
-                         .Returns(true)
-                         .Verifiable();
             var mockInputFormatter = new Mock<IInputFormatter>();
             mockInputFormatter.Setup(o => o.ReadAsync(It.IsAny<InputFormatterContext>()))
                               .Returns(Task.FromResult<object>(new Person()))
@@ -32,13 +28,12 @@ namespace Microsoft.AspNet.Mvc
             var bindingContext = GetBindingContext(typeof(Person), inputFormatter: mockInputFormatter.Object);
             bindingContext.ModelMetadata.BinderMetadata = new FromBodyAttribute();
 
-            var binder = GetBodyBinder(mockInputFormatter.Object, mockValidator.Object);
+            var binder = GetBodyBinder(mockInputFormatter.Object);
 
             // Act
             var binderResult = await binder.BindModelAsync(bindingContext);
 
             // Assert
-            mockValidator.Verify(v => v.Validate(It.IsAny<ModelValidationContext>(), It.IsAny<string>()), Times.Once);
             mockInputFormatter.Verify(v => v.ReadAsync(It.IsAny<InputFormatterContext>()), Times.Once);
         }
 
@@ -124,7 +119,7 @@ namespace Microsoft.AspNet.Mvc
             var metadataProvider = new EmptyModelMetadataProvider();
             var operationBindingContext = new OperationBindingContext
             {
-                ModelBinder = GetBodyBinder(inputFormatter, null),
+                ModelBinder = GetBodyBinder(inputFormatter),
                 MetadataProvider = metadataProvider,
                 HttpContext = new DefaultHttpContext(),
             };
@@ -141,8 +136,7 @@ namespace Microsoft.AspNet.Mvc
             return bindingContext;
         }
 
-        private static BodyModelBinder GetBodyBinder(
-            IInputFormatter inputFormatter, IBodyModelValidator validator)
+        private static BodyModelBinder GetBodyBinder(IInputFormatter inputFormatter)
         {
             var actionContext = CreateActionContext(new DefaultHttpContext());
             var inputFormatterSelector = new Mock<IInputFormatterSelector>();
@@ -151,15 +145,6 @@ namespace Microsoft.AspNet.Mvc
                     It.IsAny<IReadOnlyList<IInputFormatter>>(),
                     It.IsAny<InputFormatterContext>()))
                 .Returns(inputFormatter);
-
-            if (validator == null)
-            {
-                var mockValidator = new Mock<IBodyModelValidator>();
-                mockValidator.Setup(o => o.Validate(It.IsAny<ModelValidationContext>(), It.IsAny<string>()))
-                             .Returns(true)
-                             .Verifiable();
-                validator = mockValidator.Object;
-            }
 
             var bodyValidationPredicatesProvider = new Mock<IValidationExcludeFiltersProvider>();
             bodyValidationPredicatesProvider.SetupGet(o => o.ExcludeFilters)
@@ -179,7 +164,6 @@ namespace Microsoft.AspNet.Mvc
                 actionContext,
                 bindingContextAccessor,
                 inputFormatterSelector.Object,
-                validator,
                 bodyValidationPredicatesProvider.Object);
 
             return binder;

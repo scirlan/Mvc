@@ -92,11 +92,6 @@ namespace Microsoft.AspNet.Mvc
             [NotNull] ActionContext context,
             [NotNull] ActionBindingContext bindingContext);
 
-        protected abstract Task ValidateActionArgumentsAsync(
-            [NotNull] ActionContext context,
-            [NotNull] ActionBindingContext bindingContext,
-            IDictionary<string, object> actionArguments);
-
         public virtual async Task InvokeAsync()
         {
             _filters = GetFilters();
@@ -431,8 +426,6 @@ namespace Microsoft.AspNet.Mvc
             Instance = CreateInstance();
 
             var arguments = await GetActionArgumentsAsync(ActionContext, ActionBindingContext);
-
-            await ValidateActionArgumentsAsync(ActionContext, ActionBindingContext, arguments);
 
             _actionExecutingContext = new ActionExecutingContext(
                 ActionContext,

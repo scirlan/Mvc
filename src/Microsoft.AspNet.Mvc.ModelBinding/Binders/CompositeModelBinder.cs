@@ -55,41 +55,32 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 return false; // something went wrong
             }
 
-    //        // Only perform validation at the root of the object graph. ValidationNode will recursively walk the graph.
-    //        // Ignore ComplexModelDto since it essentially wraps the primary object.
-    //        if (newBindingContext.IsModelSet && IsBindingAtRootOfObjectGraph(newBindingContext))
-    //        {
-                //var modelName = newBindingContext.ModelName;
-                //// run validation and return the model
-                //// If we fell back to an empty prefix above and are dealing with simple types,
-                //// propagate the non-blank model name through for user clarity in validation errors.
-                //// Complex types will reveal their individual properties as model names and do not require this.
-                //if (!newBindingContext.ModelMetadata.IsComplexType &&
-    //                string.IsNullOrEmpty(newBindingContext.ModelName))
-    //            {
-                //  modelName = bindingContext.ModelName;
-    //            }
-
-    //            var validationContext = new ModelValidationContext(
-    //                bindingContext.OperationBindingContext.MetadataProvider,
-    //                bindingContext.OperationBindingContext.ValidatorProvider,
-    //                bindingContext.ModelState,
-    //                bindingContext.ModelMetadata,
-    //                containerMetadata: null,
-    //                excludeFromValidationFilters: ValidationExcludeFilters);
-
-    //            (new DefaultModelValidator()).Validate(validationContext, modelName);
-    //        }
-
             bindingContext.OperationBindingContext.BodyBindingState =
-                newBindingContext.OperationBindingContext.BodyBindingState;
+            newBindingContext.OperationBindingContext.BodyBindingState;
 
             if (newBindingContext.IsModelSet)
             {
                 bindingContext.Model = newBindingContext.Model;
+
+                // Update the model state key if we are bound using an empty prefix and it is a complex type.
+                // This is needed as validation uses the model state key to log errors. The client validation expects
+                // the erros with property names rather than the full name.
+                if (newBindingContext.ModelMetadata.IsComplexType && string.IsNullOrEmpty(newBindingContext.ModelName))
+                {
+                    bindingContext.ModelStateKey = newBindingContext.ModelStateKey;
+                }
             }
 
             return true;
+        }
+
+        private static bool IsBindingAtRootOfObjectGraph(ModelBindingContext bindingContext)
+        {
+            // We're at the root of the object graph if the model does does not have a container.
+            // This statement is true for complex types at the root twice over - once with the actual model
+            // and once when when it is represented by a ComplexModelDto. Ignore the latter case.
+            return bindingContext.ModelMetadata.ContainerType == null &&
+                   bindingContext.ModelMetadata.ModelType != typeof(ComplexModelDto);
         }
 
         private async Task<bool> TryBind(ModelBindingContext bindingContext)
@@ -106,16 +97,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
 
             // Either we couldn't find a binder, or the binder couldn't bind. Distinction is not important.
             return false;
-        }
-
-        private static bool IsBindingAtRootOfObjectGraph(ModelBindingContext bindingContext)
-        {
-            // We're at the root of the object graph if the model does does not have a container.
-            // This statement is true for complex types at the root twice over - once with the actual model
-            // and once when when it is represented by a ComplexModelDto. Ignore the latter case.
-
-            return bindingContext.ModelMetadata.ContainerType == null &&
-                   bindingContext.ModelMetadata.ModelType != typeof(ComplexModelDto);
         }
 
         private static ModelBindingContext CreateNewBindingContext(ModelBindingContext oldBindingContext,

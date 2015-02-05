@@ -45,6 +45,22 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         /// <summary>
         /// The property {0}.{1} could not be found.
         /// </summary>
+        internal static string KeyValuePair_BothKeyAndValueMustBePresent
+        {
+            get { return GetString("KeyValuePair_BothKeyAndValueMustBePresent"); }
+        }
+
+        /// <summary>
+        /// The property {0}.{1} could not be found.
+        /// </summary>
+        internal static string FormatKeyValuePair_BothKeyAndValueMustBePresent(object p0, object p1)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("KeyValuePair_BothKeyAndValueMustBePresent"), p0, p1);
+        }
+
+        /// <summary>
+        /// The property {0}.{1} could not be found.
+        /// </summary>
         internal static string Common_PropertyNotFound
         {
             get { return GetString("Common_PropertyNotFound"); }

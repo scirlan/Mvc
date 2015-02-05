@@ -34,7 +34,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
 
             // Assert
             Assert.Equal(new[] { 42, 0, 200 }, boundCollection.ToArray());
-            Assert.Equal(new[] { "someName[foo]", "someName[baz]" }, bindingContext.ValidationNode.ChildNodes.Select(o => o.ModelStateKey).ToArray());
         }
 
         [Fact]
@@ -55,7 +54,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
 
             // Assert
             Assert.Equal(new[] { 42, 100 }, boundCollection.ToArray());
-            Assert.Equal(new[] { "someName[0]", "someName[1]" }, bindingContext.ValidationNode.ChildNodes.Select(o => o.ModelStateKey).ToArray());
         }
 
         [Fact]
@@ -134,13 +132,11 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             var culture = new CultureInfo("fr-FR");
             var bindingContext = GetModelBindingContext(new SimpleHttpValueProvider());
 
-            ModelValidationNode childValidationNode = null;
             Mock.Get<IModelBinder>(bindingContext.OperationBindingContext.ModelBinder)
                 .Setup(o => o.BindModelAsync(It.IsAny<ModelBindingContext>()))
                 .Returns((ModelBindingContext mbc) =>
                 {
                     Assert.Equal("someName", mbc.ModelName);
-                    childValidationNode = mbc.ValidationNode;
                     mbc.Model = 42;
                     return Task.FromResult(true);
                 });
@@ -151,7 +147,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
 
             // Assert
             Assert.Equal(new[] { 42 }, boundCollection.ToArray());
-            Assert.Equal(new[] { childValidationNode }, bindingContext.ValidationNode.ChildNodes.ToArray());
         }
 
         private static ModelBindingContext GetModelBindingContext(IValueProvider valueProvider)

@@ -193,6 +193,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
 
             var invoker = new DefaultControllerActionArgumentBinder(
                 new DataAnnotationsModelMetadataProvider(),
+                new DefaultModelValidator(),
+                Mock.Of<IValidationExcludeFiltersProvider>(),
                 new MockMvcOptionsAccessor());
 
             // Act
@@ -246,6 +248,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
 
             var invoker = new DefaultControllerActionArgumentBinder(
                 new DataAnnotationsModelMetadataProvider(),
+                new DefaultModelValidator(),
+                Mock.Of<IValidationExcludeFiltersProvider>(),
                 new MockMvcOptionsAccessor());
 
             // Act
@@ -299,8 +303,13 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                 ModelBinder = binder.Object,
             };
 
+            var mockValidatorProvider = new Mock<IObjectModelValidator>();
+            mockValidatorProvider.Setup(o => o.Validate(It.IsAny<ModelValidationContext>(), It.IsAny<string>()));
+
             var invoker = new DefaultControllerActionArgumentBinder(
                 metadataProvider,
+                mockValidatorProvider.Object,
+                Mock.Of<IValidationExcludeFiltersProvider>(),
                 new MockMvcOptionsAccessor());
 
             // Act
@@ -355,9 +364,12 @@ namespace Microsoft.AspNet.Mvc.Core.Test
 
             var options = new MockMvcOptionsAccessor();
             options.Options.MaxModelValidationErrors = 5;
-
+            var mockValidatorProvider = new Mock<IObjectModelValidator>();
+            mockValidatorProvider.Setup(o => o.Validate(It.IsAny<ModelValidationContext>(), It.IsAny<string>()));
             var invoker = new DefaultControllerActionArgumentBinder(
                 new DataAnnotationsModelMetadataProvider(),
+                mockValidatorProvider.Object,
+                Mock.Of<IValidationExcludeFiltersProvider>(),
                 options);
 
             // Act

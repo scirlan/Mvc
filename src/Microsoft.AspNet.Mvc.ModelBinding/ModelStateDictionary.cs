@@ -137,7 +137,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         {
             get
             {
-                return ErrorCount == 0;
+                return ValidationState == ModelValidationState.Valid || ValidationState == ModelValidationState.Skipped;
             }
         }
 
@@ -296,10 +296,10 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         /// state errors; <see cref="ModelValidationState.Valid"/> otherwise.</returns>
         public ModelValidationState GetValidationState([NotNull] string key)
         {
-            ModelState exactMatchValue;
-            if (TryGetValue(key, out exactMatchValue))
+            ModelState validationState;
+            if (TryGetValue(key, out validationState))
             {
-                return exactMatchValue.ValidationState;
+                return validationState.ValidationState;
             }
 
             return ModelValidationState.Unvalidated;
@@ -319,6 +319,22 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             }
 
             modelState.ValidationState = ModelValidationState.Valid;
+        }
+
+        /// <summary>
+        /// Marks the <see cref="ModelState.ValidationState"/> for the entry with the specified <paramref name="key"/>
+        /// as <see cref="ModelValidationState.Skipped"/>.
+        /// </summary>
+        /// <param name="key">The key of the <see cref="ModelState"/> to mark as skipped.</param>
+        public void MarkFiledSkipped([NotNull] string key)
+        {
+            var modelState = GetModelStateForKey(key);
+            if (modelState.ValidationState == ModelValidationState.Invalid)
+            {
+                throw new InvalidOperationException(Resources.Validation_InvalidFieldCannotBeReset);
+            }
+
+            modelState.ValidationState = ModelValidationState.Skipped;
         }
 
         /// <summary>

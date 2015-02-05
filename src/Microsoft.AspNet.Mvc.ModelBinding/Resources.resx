@@ -123,6 +123,9 @@
   <data name="ArgumentCannotBeNullOrEmpty" xml:space="preserve">
     <value>Value cannot be null or empty.</value>
   </data>
+  <data name="KeyValuePair_BothKeyAndValueMustBePresent" xml:space="preserve">
+    <value>A value is required.</value>
+  </data>
   <data name="Common_PropertyNotFound" xml:space="preserve">
     <value>The property {0}.{1} could not be found.</value>
   </data>

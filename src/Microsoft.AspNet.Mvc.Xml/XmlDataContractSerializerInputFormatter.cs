@@ -171,9 +171,12 @@ namespace Microsoft.AspNet.Mvc.Xml
 
             using (var xmlReader = CreateXmlReader(new NonDisposableStream(request.Body)))
             {
-                var type = GetSerializableType(context.ModelType);
+				// TODO: handle inheritance scenarios
+				RequiredValidationHelper.CheckRequiredValidation(context.ModelType, context.ActionContext.ModelState);
 
-                var serializer = CreateSerializer(type);
+                var type = GetSerializableType(context.ModelType);
+				
+				var serializer = CreateSerializer(type);
 
                 var deserializedObject = serializer.ReadObject(xmlReader);
 

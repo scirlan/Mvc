@@ -81,5 +81,36 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
 			Assert.Equal(1, errors.Length);
 			Assert.Equal(string.Format(errorMessageFormat, "Age", typeName), errors[0]);
 		}
+
+		[Fact]
+		public async Task ModelWithComplexProperty_HasRequired_AndNoDataMemberRequiredAttribute()
+		{
+			// Arrange
+			var server = TestServer.Create(_services, _app);
+			var client = server.CreateClient();
+			var typeName = "XmlFormattersWebSite.Models.Address";
+			var input = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+						"<CustomerWithComplexPropertyHavingRequiredOnly><Id>10</Id>" +
+						"<Name>John</Name><City>Redmond</City><State>WA</State><Zipcode>98052</Zipcode></CustomerWithComplexPropertyHavingRequiredOnly>";
+			var content = new StringContent(input, Encoding.UTF8, "application/xml-xmlser");
+
+			// Act
+			var response = await client.PostAsync(
+				"http://localhost/RequiredValidation/CustomerWithRequiredAndDataMember",
+				content);
+
+			// Assert
+			Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+			var actual = await response.Content.ReadAsStringAsync();
+
+			var modelStateErrors = JsonConvert.DeserializeObject<Dictionary<string, string[]>>(actual);
+
+			Assert.NotNull(modelStateErrors);
+			string[] errors;
+			modelStateErrors.TryGetValue(typeName, out errors);
+			Assert.NotNull(errors);
+			Assert.Equal(1, errors.Length);
+			Assert.Equal(string.Format(errorMessageFormat, "Age", typeName), errors[0]);
+		}
 	}
 }

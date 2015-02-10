@@ -58,5 +58,11 @@ namespace XmlFormattersWebSite.Controllers
 		{
 			return customer;
 		}
+
+		public CustomerWithComplexPropertyHavingRequiredOnly CustomerWithComplexPropertyHavingRequiredOnly(
+			[FromBody] CustomerWithComplexPropertyHavingRequiredOnly customer)
+		{
+			return customer;
+		}
 	}
 }

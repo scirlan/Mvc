@@ -22,62 +22,67 @@ namespace Microsoft.AspNet.Mvc.Xml
         /// <param name="actualXml">Actual xml string.</param>
         public static void Equal(string expectedXml, string actualXml)
         {
-			var sortedExpectedXDoc = XDocument.Parse(expectedXml).SortAttributes();
-			var sortedActualXDoc = XDocument.Parse(actualXml).SortAttributes();
+            var sortedExpectedXDocument = SortAttributes(XDocument.Parse(expectedXml));
+            var sortedActualXDocument = SortAttributes(XDocument.Parse(actualXml));
 
-			// Since XNode's DeepEquals does not check for presence of xml declaration,
-			// check it explicitly
-			bool areEqual = VerifyXmlDeclaration(sortedExpectedXDoc.Declaration, sortedActualXDoc.Declaration);
-			areEqual = areEqual && XNode.DeepEquals(sortedExpectedXDoc, sortedActualXDoc);
+            // Since XNode's DeepEquals does not check for presence of xml declaration,
+            // check it explicitly
+            bool areEqual = EqualDeclarations(sortedExpectedXDocument.Declaration, sortedActualXDocument.Declaration);
+
+            areEqual = areEqual && XNode.DeepEquals(sortedExpectedXDocument, sortedActualXDocument);
 
             if (!areEqual)
             {
-				throw new EqualException(sortedExpectedXDoc.GetRawXml(), sortedActualXDoc.GetRawXml());
+                throw new EqualException(sortedExpectedXDocument.GetRawXml(), sortedActualXDocument.GetRawXml());
             }
         }
 
-		private static bool VerifyXmlDeclaration(XDeclaration expected, XDeclaration actual)
-		{
-			if (expected == null && actual == null)
-			{
-				return true;
-			}
+        private static bool EqualDeclarations(XDeclaration expected, XDeclaration actual)
+        {
+            if (expected == null && actual == null)
+            {
+                return true;
+            }
 
-			if (expected == null || actual == null)
-			{
-				return false;
-			}
+            if (expected == null || actual == null)
+            {
+                return false;
+            }
 
-			return string.Equals(expected.Version, actual.Version, StringComparison.OrdinalIgnoreCase)
-				&& string.Equals(expected.Encoding, actual.Encoding, StringComparison.OrdinalIgnoreCase);
-		}
-		private static XDocument SortAttributes(this XDocument doc)
+            return string.Equals(expected.Version, actual.Version, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(expected.Encoding, actual.Encoding, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static XDocument SortAttributes(XDocument doc)
         {
             return new XDocument(
                     doc.Declaration,
-					doc.Nodes().OfType<XText>().FirstOrDefault(),
-					doc.Root.SortAttributes());
+                    doc.Nodes().OfType<XText>().FirstOrDefault(),
+                    SortAttributes(doc.Root));
         }
 
-		private static XElement SortAttributes(this XElement element)
+        private static XElement SortAttributes(XElement element)
         {
             return new XElement(
                     element.Name,
-					element.Nodes().OfType<XText>().FirstOrDefault(),
+                    element.Nodes().OfType<XText>().FirstOrDefault(),
                     element.Attributes().OrderBy(a => a.Name.ToString()),
-					element.Elements().Select(child => child.SortAttributes()));
+                    element.Elements().Select(child => SortAttributes(child)));
         }
-		private static string GetRawXml(this XDocument xdocument)
-		{
-			string xml = null;
-			var stream = new MemoryStream();
-			xdocument.Save(stream, SaveOptions.DisableFormatting);
-			stream.Position = 0;
-			using (var reader = new StreamReader(stream))
-			{
-				xml = reader.ReadToEnd();
+
+        // Since ToString() on an XDocument gives a formatted string making it difficult
+        // to view differences in strings when a test fails, here the formatting is disabled.
+        private static string GetRawXml(this XDocument xdocument)
+        {
+            string xml = null;
+            var stream = new MemoryStream();
+            xdocument.Save(stream, SaveOptions.DisableFormatting);
+            stream.Position = 0;
+            using (var reader = new StreamReader(stream))
+            {
+                xml = reader.ReadToEnd();
+            }
+            return xml;
+        }
     }
-			return xml;
-		}
-	}
 }

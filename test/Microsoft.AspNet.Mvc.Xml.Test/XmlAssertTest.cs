@@ -4,7 +4,7 @@
 using Xunit;
 using Xunit.Sdk;
 
-namespace Microsoft.AspNet.Mvc.Xml.Test
+namespace Microsoft.AspNet.Mvc.Xml
 {
 	public class XmlAssertTest
 	{

@@ -22,6 +22,11 @@ namespace Microsoft.AspNet.Mvc.Xml
         /// <param name="actualXml">Actual xml string.</param>
         public static void Equal(string expectedXml, string actualXml)
         {
+            if (string.Equals(expectedXml, actualXml, StringComparison.Ordinal))
+            {
+                return;
+            }
+
             var sortedExpectedXDocument = SortAttributes(XDocument.Parse(expectedXml));
             var sortedActualXDocument = SortAttributes(XDocument.Parse(actualXml));
 

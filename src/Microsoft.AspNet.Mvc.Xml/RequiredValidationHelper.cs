@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -29,21 +28,22 @@ namespace Microsoft.AspNet.Mvc.Xml
 			}
 		}
 
-        private static List<string> CheckRequiredValidation(Type modelType)
+		private static List<string> CheckRequiredValidation(Type modelType)
 		{
-			//if (modelType.IsGenericType)
-			//{
-			//	modelType = ExtractTypeParameter(modelType);
-			//}
+			List<string> errors;
 
-			// Check if a type has already been probed and get the errors.
-			if (probedTypes.ContainsKey(modelType))
+            if (modelType.IsGenericType())
 			{
-				return probedTypes[modelType];
+				modelType = ExtractTypeParameter(modelType);
 			}
 
-			var errors = new List<string>();
+			// Check if a type has already been probed and get the errors.
+			if (probedTypes.TryGetValue(modelType, out errors))
+			{
+				return errors;
+			}
 
+			errors = new List<string>();
 			if (!modelType.IsValueType())
 			{
 				probedTypes.TryAdd(modelType, errors);
@@ -65,9 +65,9 @@ namespace Microsoft.AspNet.Mvc.Xml
 
 							if (!hasDataMemberRequired)
 							{
-								errors.Add(string.Format(
-									"Property '{0}' on type '{1}' has Required attribute but is missing DataMember(IsRequired = true)",
-									property.Name, modelType.FullName));
+								errors.Add(Resources.FormatRequiredProperty_MustHaveDataMemberRequired(
+									property.Name, 
+									modelType.FullName));
 							}
 						}
 					}
@@ -90,15 +90,6 @@ namespace Microsoft.AspNet.Mvc.Xml
 			}
 
 			return type;
-		}
-
-		static Type ExtractGenericInterface(this Type queryType, Type interfaceType)
-		{
-			Func<Type, bool> matchesInterface =
-				t => t.IsGenericType() && (t.GetGenericTypeDefinition() == interfaceType);
-			return (matchesInterface(queryType)) ?
-				queryType :
-				queryType.GetInterfaces().FirstOrDefault(matchesInterface);
 		}
 	}
 }

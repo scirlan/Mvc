@@ -16,9 +16,9 @@ namespace Microsoft.AspNet.Mvc.Xml
 		private static ConcurrentDictionary<Type, List<string>> probedTypes
 			= new ConcurrentDictionary<Type, List<string>>();
 
-		public static void CheckRequiredValidation(Type modelType, ModelStateDictionary modelState)
+		public static void CheckForRequiredAttribute(Type modelType, ModelStateDictionary modelState)
 		{
-			var errors = CheckRequiredValidation(modelType);
+			var errors = CheckForRequiredAttribute(modelType);
 
 			foreach (var error in errors)
 			{
@@ -28,13 +28,17 @@ namespace Microsoft.AspNet.Mvc.Xml
 			}
 		}
 
-		private static List<string> CheckRequiredValidation(Type modelType)
+		private static List<string> CheckForRequiredAttribute(Type modelType)
 		{
 			List<string> errors;
 
             if (modelType.IsGenericType())
 			{
-				modelType = ExtractTypeParameter(modelType);
+				var enumerableOfT = modelType.ExtractGenericInterface(typeof(IEnumerable<>));
+				if (enumerableOfT != null)
+				{
+					modelType = enumerableOfT.GetGenericArguments()[0];
+				}
 			}
 
 			// Check if a type has already been probed and get the errors.
@@ -49,7 +53,7 @@ namespace Microsoft.AspNet.Mvc.Xml
 				probedTypes.TryAdd(modelType, errors);
 				foreach (var property in modelType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
 				{
-					if (property.PropertyType.IsValueType())
+					if (!property.PropertyType.IsNullableValueType() && property.PropertyType.IsValueType())
 					{
 						var required = property.GetCustomAttribute(typeof(RequiredAttribute), inherit: true);
 						if (required != null)
@@ -79,17 +83,6 @@ namespace Microsoft.AspNet.Mvc.Xml
 			}
 
 			return errors;
-		}
-
-		static Type ExtractTypeParameter(Type type)
-		{
-			var enumerableOfT = type.ExtractGenericInterface(typeof(IEnumerable<>));
-			if (enumerableOfT != null)
-			{
-				return enumerableOfT.GetGenericArguments()[0];
-			}
-
-			return type;
 		}
 	}
 }

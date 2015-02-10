@@ -16,8 +16,8 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
 {
 	public class RequiredValidationTest
 	{
-		private readonly string errorMessageFormat = "Property '{0}' on type '{1}' has Required attribute " +
-														"but is missing DataMember(IsRequired = true)";
+		private readonly string errorMessageFormat = "Property '{0}' on type '{1}' has RequiredAttribute but " +
+														"no DataMember(IsRequired = true) attribute.";
 		private readonly IServiceProvider _services = TestHelper.CreateServices(nameof(XmlFormattersWebSite));
 		private readonly Action<IApplicationBuilder> _app = new XmlFormattersWebSite.Startup().Configure;
 

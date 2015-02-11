@@ -14,7 +14,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
     /// <summary>
     /// Recursively validate an object.
     /// </summary>
-    public class DefaultModelValidator : IObjectModelValidator
+    public class DefaultObjectValidator : IObjectModelValidator
     {
         /// <inheritdoc />
         public bool Validate([NotNull] ModelValidationContext modelValidationContext, string modelStatePrefix)
@@ -35,6 +35,13 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             // Recursion guard to avoid stack overflows
             RuntimeHelpers.EnsureSufficientExecutionStack();
 
+            var modelState = validationContext.ModelValidationContext.ModelState;
+            if (modelState.HasReachedMaxErrors)
+            {
+                // Short circuit if max erros have been recorded. In which case we treat this as invalid.
+                return false;
+            }
+
             var isValid = true;
             if (validators == null)
             {
@@ -44,7 +51,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 validators = validationContext.ModelValidationContext.ValidatorProvider.GetValidators(metadata);
             }
 
-            var modelState = validationContext.ModelValidationContext.ModelState;
             // We don't need to recursively traverse the graph for null values
             if (metadata.Model == null)
             {
@@ -57,21 +63,9 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 validationContext.ModelValidationContext.ExcludeFromValidationFilters,
                 modelType))
             {
-                 try
-                    {
-                        var result = ShallowValidate(modelKey, metadata, validationContext, validators);
-                           // We should not mark properties of simple types, and collections with simple types.
-                //if (metadata.IsComplexType && !typeof(Type).IsAssignableFrom(modelType))
-                    MarkPropertiesAsSkipped(modelKey, metadata, validationContext);
+                var result = ShallowValidate(modelKey, metadata, validationContext, validators);
+                MarkPropertiesAsSkipped(modelKey, metadata, validationContext);
                 return result;
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Console.WriteLine("actionName : " + modelType.FullName + (typeof(Type).IsAssignableFrom(modelType)));
-                        System.Console.WriteLine(ex.ToString());
-                        throw;
-                    }
-             
             }
 
             // Check to avoid infinite recursion. This can happen with cycles in an object graph.
@@ -124,7 +118,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
 
                 if (validationState == ModelValidationState.Unvalidated)
                 {
-                    validationContext.ModelValidationContext.ModelState.MarkFiledSkipped(childKey);
+                    validationContext.ModelValidationContext.ModelState.MarkFieldSkipped(childKey);
                 }
             }
         }
@@ -212,7 +206,15 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                         foreach (var error in validator.Validate(modelValidationContext))
                         {
                             var errorKey = ModelBindingHelper.CreatePropertyModelName(modelKey, error.MemberName);
-                            modelState.AddModelError(errorKey, error.Message);
+                            if (!modelState.TryAddModelError(errorKey, error.Message) &&
+                                modelState.GetFieldValidationState(errorKey) == ModelValidationState.Unvalidated)
+                            {
+
+                                // If we are not able to add a model error 
+                                // ( for instance when the max error count is reached, mark the model as skipped. 
+                                modelState.MarkFieldSkipped(errorKey);
+                            }
+
                             isValid = false;
                         }
                     }

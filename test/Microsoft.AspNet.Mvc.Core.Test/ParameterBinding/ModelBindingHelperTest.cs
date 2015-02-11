@@ -42,7 +42,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     metadataProvider.Object,
                                                     GetCompositeBinder(binder.Object),
                                                     Mock.Of<IValueProvider>(),
-                                                    new DefaultModelValidator(),
+                                                    new DefaultObjectValidator(),
                                                     Mock.Of<IModelValidatorProvider>());
 
             // Assert
@@ -82,7 +82,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     new DataAnnotationsModelMetadataProvider(),
                                                     GetCompositeBinder(binders),
                                                     valueProvider,
-                                                    new DefaultModelValidator(),
+                                                    new DefaultObjectValidator(),
                                                     validator);
 
             // Assert
@@ -121,7 +121,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     new DataAnnotationsModelMetadataProvider(),
                                                     GetCompositeBinder(binders),
                                                     valueProvider,
-                                                    new DefaultModelValidator(),
+                                                    new DefaultObjectValidator(),
                                                     validator);
 
             // Assert
@@ -208,7 +208,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     new DataAnnotationsModelMetadataProvider(),
                                                     GetCompositeBinder(binders),
                                                     valueProvider,
-                                                    new DefaultModelValidator(),
+                                                    new DefaultObjectValidator(),
                                                     validator,
                                                     includePredicate);
 
@@ -293,7 +293,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     new DataAnnotationsModelMetadataProvider(),
                                                     GetCompositeBinder(binders),
                                                     valueProvider,
-                                                    new DefaultModelValidator(),
+                                                    new DefaultObjectValidator(),
                                                     validator,
                                                     m => m.IncludedProperty,
                                                     m => m.MyProperty);
@@ -344,7 +344,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
                                                     new DataAnnotationsModelMetadataProvider(),
                                                     GetCompositeBinder(binders),
                                                     valueProvider,
-                                                    new DefaultModelValidator(),
+                                                    new DefaultObjectValidator(),
                                                     validator);
 
             // Assert

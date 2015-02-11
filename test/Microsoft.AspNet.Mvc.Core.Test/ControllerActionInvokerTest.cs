@@ -2047,7 +2047,7 @@ namespace Microsoft.AspNet.Mvc
                 inputFormattersProvider.Object,
                 new DefaultControllerActionArgumentBinder(
                     new EmptyModelMetadataProvider(),
-                    new DefaultModelValidator(),
+                    new DefaultObjectValidator(),
                     Mock.Of<IValidationExcludeFiltersProvider>(),
                     new MockMvcOptionsAccessor()),
                 new MockModelBinderProvider() { ModelBinders = new List<IModelBinder>() { binder.Object } },

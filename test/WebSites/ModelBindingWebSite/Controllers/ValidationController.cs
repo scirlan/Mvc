@@ -11,6 +11,7 @@ namespace ModelBindingWebSite.Controllers
     {
         public bool SkipValidation(Resident resident)
         {
+            System.Diagnostics.Debugger.Launch();
             return ModelState.IsValid;
         }
 

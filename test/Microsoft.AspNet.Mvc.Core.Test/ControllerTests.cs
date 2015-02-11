@@ -1360,7 +1360,7 @@ namespace Microsoft.AspNet.Mvc.Test
                 BindingContext = bindingContext,
                 MetadataProvider = metadataProvider,
                 ViewData = viewData,
-                ObjectValidator = new DefaultModelValidator()
+                ObjectValidator = new DefaultObjectValidator()
             };
         }
 

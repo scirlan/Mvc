@@ -10,9 +10,9 @@ namespace ModelBindingWebSite
     {
         public IEnumerable<Address> ShippingAddresses { get; set; }
 
-        //public Address HomeAddress { get; set; }
+        public Address HomeAddress { get; set; }
 
-        //[FromBody]
-        //public Address OfficeAddress { get; set; }
+        [FromBody]
+        public Address OfficeAddress { get; set; }
     }
 }

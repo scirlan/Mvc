@@ -111,17 +111,7 @@ namespace Microsoft.AspNet.Mvc
                     parameter,
                     containerMetadata: null,
                     excludeFromValidationFilters: _excludeFilterProvider.ExcludeFilters);
-
-                    try
-                    {
-                        _validator.Validate(validationContext, modelBindingContext.ModelStateKey);
-                    }
-                    catch (Exception ex)
-                    {
-                        //System.Console.WriteLine("actionName : " + actionContext.ActionDescriptor.DisplayName + " :" + modelBindingContext.ModelStateKey);
-                        System.Console.WriteLine(ex.ToString());
-                        throw;
-                    }
+                    _validator.Validate(validationContext, modelBindingContext.ModelStateKey);
                 }
             }
         }

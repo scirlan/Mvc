@@ -193,7 +193,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
 
             var invoker = new DefaultControllerActionArgumentBinder(
                 new DataAnnotationsModelMetadataProvider(),
-                new DefaultModelValidator(),
+                new DefaultObjectValidator(),
                 Mock.Of<IValidationExcludeFiltersProvider>(),
                 new MockMvcOptionsAccessor());
 
@@ -248,7 +248,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
 
             var invoker = new DefaultControllerActionArgumentBinder(
                 new DataAnnotationsModelMetadataProvider(),
-                new DefaultModelValidator(),
+                new DefaultObjectValidator(),
                 Mock.Of<IValidationExcludeFiltersProvider>(),
                 new MockMvcOptionsAccessor());
 
@@ -318,6 +318,109 @@ namespace Microsoft.AspNet.Mvc.Core.Test
             // Assert
             Assert.Equal(1, result.Count);
             Assert.Equal(value, result["foo"]);
+        }
+
+        [Fact]
+        public async Task GetActionArgumentsAsync_CallsValidator_IfModelBinderSucceeds()
+        {
+            // Arrange
+            Func<object, int> method = foo => 1;
+            var actionDescriptor = new ControllerActionDescriptor
+            {
+                MethodInfo = method.Method,
+                Parameters = new List<ParameterDescriptor>
+                {
+                    new ParameterDescriptor
+                    {
+                        Name = "foo",
+                        ParameterType = typeof(object),
+                    }
+                }
+            };
+
+           
+            var actionContext = new ActionContext(
+                new DefaultHttpContext(),
+                new RouteData(),
+                actionDescriptor);
+
+            var binder = new Mock<IModelBinder>();
+            binder
+                .Setup(b => b.BindModelAsync(It.IsAny<ModelBindingContext>()))
+                .Callback<ModelBindingContext>(c => c.IsModelSet = true)
+                .Returns(Task.FromResult(result: true));
+
+            var actionBindingContext = new ActionBindingContext()
+            {
+                ModelBinder = binder.Object,
+            };
+
+            var mockValidatorProvider = new Mock<IObjectModelValidator>();
+            mockValidatorProvider.Setup(o => o.Validate(It.IsAny<ModelValidationContext>(), It.IsAny<string>()))
+            .Returns(true)
+            .Verifiable();
+            var invoker = new DefaultControllerActionArgumentBinder(
+                new DataAnnotationsModelMetadataProvider(),
+                mockValidatorProvider.Object,
+                Mock.Of<IValidationExcludeFiltersProvider>(),
+                new MockMvcOptionsAccessor());
+
+            // Act
+            var result = await invoker.GetActionArgumentsAsync(actionContext, actionBindingContext);
+
+            // Assert
+            mockValidatorProvider.Verify(
+                o => o.Validate(It.IsAny<ModelValidationContext>(), It.IsAny<string>()), Times.Once());
+        }
+
+        [Fact]
+        public async Task GetActionArgumentsAsync_DoesNotCallValidator_IfModelBinderFails()
+        {
+            // Arrange
+            Func<object, int> method = foo => 1;
+            var actionDescriptor = new ControllerActionDescriptor
+            {
+                MethodInfo = method.Method,
+                Parameters = new List<ParameterDescriptor>
+                {
+                    new ParameterDescriptor
+                    {
+                        Name = "foo",
+                        ParameterType = typeof(object),
+                    }
+                }
+            };
+
+            var actionContext = new ActionContext(
+                new DefaultHttpContext(),
+                new RouteData(),
+                actionDescriptor);
+
+            var binder = new Mock<IModelBinder>();
+            binder
+                .Setup(b => b.BindModelAsync(It.IsAny<ModelBindingContext>()))
+                .Returns(Task.FromResult(result: false));
+
+            var actionBindingContext = new ActionBindingContext()
+            {
+                ModelBinder = binder.Object,
+            };
+
+            var mockValidatorProvider = new Mock<IObjectModelValidator>();
+            mockValidatorProvider.Setup(o => o.Validate(It.IsAny<ModelValidationContext>(), It.IsAny<string>()))
+            .Returns(true)
+            .Verifiable();
+            var invoker = new DefaultControllerActionArgumentBinder(
+                new DataAnnotationsModelMetadataProvider(),
+                mockValidatorProvider.Object,
+                Mock.Of<IValidationExcludeFiltersProvider>(),
+                new MockMvcOptionsAccessor());
+
+            // Act
+            var result = await invoker.GetActionArgumentsAsync(actionContext, actionBindingContext);
+
+            // Assert
+            mockValidatorProvider.Verify(o => o.Validate(It.IsAny<ModelValidationContext>(), It.IsAny<string>()), Times.Never());
         }
 
         [Fact]

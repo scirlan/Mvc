@@ -53,7 +53,8 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             Assert.Null(bindingContext.Model);
             Assert.False(bindingContext.ModelState.IsValid);
             Assert.Equal("someName", bindingContext.ModelName);
-            Assert.Equal(bindingContext.ModelState["someName.Value"].Errors.First().ErrorMessage, "A value is required.");
+            Assert.Equal(
+                bindingContext.ModelState["someName.Value"].Errors.First().ErrorMessage, "A value is required.");
         }
 
         [Fact]

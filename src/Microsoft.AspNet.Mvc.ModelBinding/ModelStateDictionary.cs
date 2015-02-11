@@ -326,12 +326,12 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         /// as <see cref="ModelValidationState.Skipped"/>.
         /// </summary>
         /// <param name="key">The key of the <see cref="ModelState"/> to mark as skipped.</param>
-        public void MarkFiledSkipped([NotNull] string key)
+        public void MarkFieldSkipped([NotNull] string key)
         {
             var modelState = GetModelStateForKey(key);
             if (modelState.ValidationState == ModelValidationState.Invalid)
             {
-                throw new InvalidOperationException(Resources.Validation_InvalidFieldCannotBeReset);
+                throw new InvalidOperationException(Resources.Validation_InvalidFieldCannotBeReset_ToSkipped);
             }
 
             modelState.ValidationState = ModelValidationState.Skipped;

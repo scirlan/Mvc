@@ -27,7 +27,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 bindingContext.ModelState.TryAddModelError(keyResult.ModelStateKey,
                     Resources.KeyValuePair_BothKeyAndValueMustBePresent);
             }
-            else 
+            else if (keyResult.Success && !valueResult.Success)
             {
                 bindingContext.ModelState.TryAddModelError(valueResult.ModelStateKey,
                     Resources.KeyValuePair_BothKeyAndValueMustBePresent);

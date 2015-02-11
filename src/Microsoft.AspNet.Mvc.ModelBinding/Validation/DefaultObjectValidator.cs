@@ -17,7 +17,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
     public class DefaultObjectValidator : IObjectModelValidator
     {
         /// <inheritdoc />
-        public bool Validate([NotNull] ModelValidationContext modelValidationContext, string modelStatePrefix)
+        public void Validate([NotNull] ModelValidationContext modelValidationContext, string modelStatePrefix)
         {
             var metadata = modelValidationContext.ModelMetadata;
             var validationContext = new ValidationContext()
@@ -26,7 +26,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 Visited = new HashSet<object>(ReferenceEqualityComparer.Instance),
             };
 
-            return ValidateNonVisitedNodeAndChildren(modelStatePrefix, metadata, validationContext, validators: null);
+            ValidateNonVisitedNodeAndChildren(modelStatePrefix, metadata, validationContext, validators: null);
         }
 
         private bool ValidateNonVisitedNodeAndChildren(string modelKey,

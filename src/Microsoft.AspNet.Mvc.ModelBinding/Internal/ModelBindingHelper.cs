@@ -137,37 +137,5 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Internal
                 return null;
             }
         }
-
-        public static bool RunRequiredValidaiton(
-            string modelStateKey,
-            ModelMetadata metadata,
-            ModelStateDictionary modelState,
-            IModelValidatorProvider modelValidatorProvider,
-            IModelMetadataProvider modelMetadataProvider)
-        {
-            var requiredModelValidator = modelValidatorProvider
-                .GetValidators(metadata)
-                .FirstOrDefault(validator => validator != null && validator.IsRequired);
-            if (requiredModelValidator == null)
-            {
-                return false;
-            }
-
-            var modelValidationContext = new ModelValidationContext(
-                modelMetadataProvider,
-                modelValidatorProvider,
-                modelState,
-                metadata,
-                containerMetadata: null);
-
-            var addedError = false;
-            foreach (var validationResult in requiredModelValidator.Validate(modelValidationContext))
-            {
-                modelState.TryAddModelError(modelStateKey, validationResult.Message);
-                addedError = true;
-            }
-
-            return addedError;
-        }
     }
 }

@@ -482,11 +482,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 var validationState = bindingContext.ModelState.GetFieldValidationState(modelStateKey);
                 if (validationState == ModelValidationState.Unvalidated)
                 {
-                    //dtoResult.ValidationNode.Validated += CreateNullCheckFailedHandler(propertyMetadata, value);
-                    // TODO: https://github.com/aspnet/Mvc/issues/450 Revive ModelBinderConfig
-                    // var errorMessage =  ModelBinderConfig.ValueRequiredErrorMessageProvider(e.ValidationContext,
-                    //                                                                            modelMetadata,
-                    //                                                                            incomingValue);
                     var errorMessage = Resources.ModelBinderConfig_ValueRequired;
                     if (errorMessage != null)
                     {

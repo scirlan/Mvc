@@ -357,7 +357,6 @@ namespace Microsoft.AspNet.Mvc.Core.Test
 
             var mockValidatorProvider = new Mock<IObjectModelValidator>();
             mockValidatorProvider.Setup(o => o.Validate(It.IsAny<ModelValidationContext>(), It.IsAny<string>()))
-            .Returns(true)
             .Verifiable();
             var invoker = new DefaultControllerActionArgumentBinder(
                 new DataAnnotationsModelMetadataProvider(),
@@ -408,7 +407,6 @@ namespace Microsoft.AspNet.Mvc.Core.Test
 
             var mockValidatorProvider = new Mock<IObjectModelValidator>();
             mockValidatorProvider.Setup(o => o.Validate(It.IsAny<ModelValidationContext>(), It.IsAny<string>()))
-            .Returns(true)
             .Verifiable();
             var invoker = new DefaultControllerActionArgumentBinder(
                 new DataAnnotationsModelMetadataProvider(),

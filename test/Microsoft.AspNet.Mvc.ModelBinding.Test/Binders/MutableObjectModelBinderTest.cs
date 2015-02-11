@@ -374,7 +374,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             // Assert
             Assert.True(retValue);
             Assert.IsType<Person>(bindingContext.Model);
-            //Assert.True(bindingContext.ValidationNode.ValidateAllProperties);
             testableBinder.Verify();
         }
 
@@ -419,7 +418,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             // Assert
             Assert.True(retValue);
             Assert.IsType<Person>(bindingContext.Model);
-            //Assert.True(bindingContext.ValidationNode.ValidateAllProperties);
             testableBinder.Verify();
         }
 
@@ -685,53 +683,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             Assert.Equal(new[] { "Required" }, validationInfo.RequiredProperties);
             Assert.Equal(new[] { "Never" }, validationInfo.SkipProperties);
         }
-
-        //[Fact]
-        //public void NullCheckFailedHandler_ModelStateAlreadyInvalid_DoesNothing()
-        //{
-        //    // Arrange
-        //    var modelState = new ModelStateDictionary();
-        //    modelState.AddModelError("foo.bar", "Some existing error.");
-
-        //    var modelMetadata = GetMetadataForType(typeof(Person));
-        //    var validationNode = new ModelValidationNode(modelMetadata, "foo");
-        //    var validationContext = new ModelValidationContext(new DataAnnotationsModelMetadataProvider(),
-        //                                                       Mock.Of<IModelValidatorProvider>(),
-        //                                                       modelState,
-        //                                                       modelMetadata,
-        //                                                       null);
-        //    var e = new ModelValidatedEventArgs(validationContext, parentNode: null);
-
-        //    // Act
-        //    var handler = MutableObjectModelBinder.CreateNullCheckFailedHandler(modelMetadata, incomingValue: null);
-        //    handler(validationNode, e);
-
-        //    // Assert
-        //    Assert.False(modelState.ContainsKey("foo"));
-        //}
-
-        //[Fact]
-        //public void NullCheckFailedHandler_ModelStateValid_AddsErrorString()
-        //{
-        //    // Arrange
-        //    var modelState = new ModelStateDictionary();
-        //    var modelMetadata = GetMetadataForType(typeof(Person));
-        //    var validationNode = new ModelValidationNode(modelMetadata, "foo");
-        //    var validationContext = new ModelValidationContext(new DataAnnotationsModelMetadataProvider(),
-        //                                                       Mock.Of<IModelValidatorProvider>(),
-        //                                                       modelState,
-        //                                                       modelMetadata,
-        //                                                       null);
-        //    var e = new ModelValidatedEventArgs(validationContext, parentNode: null);
-
-        //    // Act
-        //    var handler = MutableObjectModelBinder.CreateNullCheckFailedHandler(modelMetadata, incomingValue: null);
-        //    handler(validationNode, e);
-
-        //    // Assert
-        //    Assert.True(modelState.ContainsKey("foo"));
-        //    Assert.Equal("A value is required.", modelState["foo"].Errors[0].ErrorMessage);
-        //}
 
         [Fact]
         [ReplaceCulture]

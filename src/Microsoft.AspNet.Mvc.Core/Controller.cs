@@ -1102,14 +1102,14 @@ namespace Microsoft.AspNet.Mvc
                modelType: model.GetType());
 
             var validationExcludeFiltersProvider = Context.RequestServices
-                                                              .GetRequiredService<IValidationExcludeFiltersProvider>();
+                                                          .GetRequiredService<IValidationExcludeFiltersProvider>();
             var validationContext = new ModelValidationContext(
                 MetadataProvider,
                 BindingContext.ValidatorProvider,
                 ModelState,
                 modelMetadata,
                 containerMetadata: null,
-                excludeFromValidationFilters:validationExcludeFiltersProvider.ExcludeFilters);
+                excludeFromValidationFilters: validationExcludeFiltersProvider.ExcludeFilters);
 
             var modelName = prefix ?? string.Empty;
             ObjectValidator.Validate(validationContext, modelName);

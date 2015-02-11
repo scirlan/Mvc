@@ -23,8 +23,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         /// Initializes a new instance of the CompositeModelBinder class.
         /// </summary>
         /// <param name="modelBinders">A collection of <see cref="IModelBinder"/> instances.</param>
-        /// <param name="validationExcludeFiltersProvider">
-        /// A type which can provide <see cref="IValidationExcludeFiltersProvider.ExcludeFilters"/>.</param>
         public CompositeModelBinder([NotNull] IEnumerable<IModelBinder> modelBinders)
         {
             ModelBinders = new List<IModelBinder>(modelBinders);
@@ -32,8 +30,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
 
         /// <inheritdoc />
         public IReadOnlyList<IModelBinder> ModelBinders { get; }
-
-        public IReadOnlyList<IExcludeTypeValidationFilter> ValidationExcludeFilters { get; set; }
 
         public virtual async Task<bool> BindModelAsync([NotNull] ModelBindingContext bindingContext)
         {
@@ -56,7 +52,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             }
 
             bindingContext.OperationBindingContext.BodyBindingState =
-            newBindingContext.OperationBindingContext.BodyBindingState;
+                newBindingContext.OperationBindingContext.BodyBindingState;
 
             if (newBindingContext.IsModelSet)
             {
@@ -72,15 +68,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             }
 
             return true;
-        }
-
-        private static bool IsBindingAtRootOfObjectGraph(ModelBindingContext bindingContext)
-        {
-            // We're at the root of the object graph if the model does does not have a container.
-            // This statement is true for complex types at the root twice over - once with the actual model
-            // and once when when it is represented by a ComplexModelDto. Ignore the latter case.
-            return bindingContext.ModelMetadata.ContainerType == null &&
-                   bindingContext.ModelMetadata.ModelType != typeof(ComplexModelDto);
         }
 
         private async Task<bool> TryBind(ModelBindingContext bindingContext)

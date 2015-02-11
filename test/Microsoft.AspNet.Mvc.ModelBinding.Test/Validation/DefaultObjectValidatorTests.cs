@@ -349,7 +349,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             var validator = new DefaultObjectValidator();
 
             // Act
-            var isBound = validator.Validate(validationContext, "user");
+            validator.Validate(validationContext, "user");
 
             // Assert
             Assert.Equal(new[] { "key1", "user.Password", "", "user.ConfirmPassword" },
@@ -376,7 +376,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             var validator = new DefaultObjectValidator();
 
             // Act
-            var isBound = validator.Validate(validationContext, "user");
+            validator.Validate(validationContext, "user");
 
             // Assert
             Assert.False(validationContext.ModelState.ContainsKey("user.Password"));
@@ -405,7 +405,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             var validator = new DefaultObjectValidator();
 
             // Act
-            var isBound = validator.Validate(validationContext, "user");
+            validator.Validate(validationContext, "user");
 
             // Assert
             var modelState = validationContext.ModelState["user.Password"];

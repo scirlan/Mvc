@@ -36,7 +36,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
         }
 
         [Fact]
-        public async Task BindModel_MissingValue_ReturnsTrue()
+        public async Task BindModel_MissingValue_ReturnsTrue_AndAddsModelValidationError()
         {
             // Arrange
             var valueProvider = new SimpleHttpValueProvider();
@@ -53,8 +53,28 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
             Assert.Null(bindingContext.Model);
             Assert.False(bindingContext.ModelState.IsValid);
             Assert.Equal("someName", bindingContext.ModelName);
-            Assert.Equal(
-                bindingContext.ModelState["someName.Value"].Errors.First().ErrorMessage, "A value is required.");
+            Assert.Equal(bindingContext.ModelState["someName.Value"].Errors.First().ErrorMessage, "A value is required.");
+        }
+
+        [Fact]
+        public async Task BindModel_MissingKyAndMissingValue_DoNotAddModelStateError()
+        {
+            // Arrange
+            var valueProvider = new SimpleHttpValueProvider();
+
+            // Create int binder to create the value but not the key.
+            var bindingContext = GetBindingContext(valueProvider, CreateIntBinder());
+            var binder = new KeyValuePairModelBinder<int, string>();
+
+            // Act
+            bool retVal = await binder.BindModelAsync(bindingContext);
+
+            // Assert
+            Assert.True(retVal);
+            Assert.Null(bindingContext.Model);
+            Assert.False(bindingContext.ModelState.IsValid);
+            Assert.Equal("someName", bindingContext.ModelName);
+            Assert.Empty(bindingContext.ModelState["someName.Value"].Errors);
         }
 
         [Fact]
@@ -170,33 +190,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Test
                     return Task.FromResult(false);
                 });
             return mockStringBinder.Object;
-        }
-
-        private static IModelBinder CreatePersonBinder()
-        {
-            var mockStringBinder = new Mock<IModelBinder>();
-            mockStringBinder
-                .Setup(o => o.BindModelAsync(It.IsAny<ModelBindingContext>()))
-                .Returns((ModelBindingContext mbc) =>
-                {
-                    if (mbc.ModelType == typeof(Person))
-                    {
-                        mbc.Model = new Person() { Name = "some-name" };
-                        return Task.FromResult(true);
-                    }
-                    return Task.FromResult(false);
-                });
-            return mockStringBinder.Object;
-        }
-
-        public class Person : IValidatableObject
-        {
-            public string Name { get; set; }
-
-            public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-            {
-                throw new NotImplementedException();
-            }
         }
     }
 }

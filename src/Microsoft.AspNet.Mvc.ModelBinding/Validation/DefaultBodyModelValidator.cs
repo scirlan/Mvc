@@ -58,8 +58,8 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 validationContext.ModelValidationContext.ExcludeFromValidationFilters,
                 modelType))
             {
-                ShallowValidate(modelKey, metadata, validationContext, validators);
                 MarkPropertiesAsSkipped(modelKey, metadata, validationContext);
+                ShallowValidate(modelKey, metadata, validationContext, validators);                
             }
 
             // Check to avoid infinite recursion. This can happen with cycles in an object graph.
@@ -95,14 +95,14 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         private void MarkPropertiesAsSkipped(string currentModelKey, ModelMetadata metadata, ValidationContext validationContext)
         {
             var modelState = validationContext.ModelValidationContext.ModelState;
-            var currentModelState = modelState.GetFieldValidationState(currentModelKey);
-            if (currentModelState != ModelValidationState.Unvalidated)
-            {
+            // var currentModelState = modelState.GetFieldValidationState(currentModelKey);
+            //if (currentModelState != ModelValidationState.Unvalidated)
+            //{
                 // There are no sub properties which we need to take a look at.
                 // Either the tree under current node is valid or invalid or there is no entry in the model state.
                 // In all these cases we need not mark properties.
-                return;
-            }
+            //    return;
+            //}
 
             foreach (var childMetadata in metadata.Properties)
             {

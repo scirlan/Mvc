@@ -689,6 +689,47 @@ namespace Microsoft.AspNet.Mvc.Xml
             Assert.Empty(context.ActionContext.ModelState);
         }
 
+        [Fact]
+        public async Task PostingModel_WithPropertySelfReferencingItself()
+        {
+            // Arrange
+            var input = "<Employee xmlns=\"http://schemas.datacontract.org/2004/07/Microsoft.AspNet.Mvc.Xml\"" +
+                " xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\"><Id>10</Id><Manager><Id>11</Id><Manager" +
+                " i:nil=\"true\"/><Name>Mike</Name></Manager><Name>John</Name></Employee>";
+            var formatter = new XmlDataContractSerializerInputFormatter();
+            var contentBytes = Encodings.UTF8EncodingWithoutBOM.GetBytes(input);
+            var context = GetInputFormatterContext(contentBytes, typeof(Employee));
+            var expectedModel = new Employee()
+            {
+                Id = 10,
+                Name = "John",
+                Manager = new Employee()
+                {
+                    Id = 11, Name = "Mike"
+                }
+            };
+
+            // Act
+            var model = await formatter.ReadAsync(context) as Employee;
+
+            // Assert
+            Assert.NotNull(model);
+            Assert.Equal(expectedModel.Id, model.Id);
+            Assert.Equal(expectedModel.Name, model.Name);
+            Assert.NotNull(model.Manager);
+            Assert.Equal(expectedModel.Manager.Id, model.Manager.Id);
+            Assert.Equal(expectedModel.Manager.Name, model.Manager.Name);
+            Assert.Null(model.Manager.Manager);
+
+            AssertModelStateErrorMessages(
+                typeof(Employee).FullName,
+                context.ActionContext,
+                containsErrorMessages: new[]
+                {
+                    string.Format(requiredErrorMessageFormat, nameof(Employee.Id), typeof(Employee).FullName)
+                });
+        }
+
         private void AssertModelStateErrorMessages(
             string modelStateKey,
             ActionContext actionContext,
@@ -781,6 +822,18 @@ namespace Microsoft.AspNet.Mvc.Xml
         public List<int?> ServicedYears { get; set; }
     }
 
+    public class Employee
+    {
+        [Required]
+        public int Id { get; set; }
+
+        [Required]
+        public string Name { get; set; }
+
+        [Required]
+        public Employee Manager { get; set; }
+    }
+
     public class ModelWithPropertyHavingRequiredAttributeValidationErrors
     {
         public Address AddressProperty { get; set; }
@@ -799,4 +852,6 @@ namespace Microsoft.AspNet.Mvc.Xml
     {
         public CarInfo CarInfoProperty { get; set; }
     }
+
+
 }

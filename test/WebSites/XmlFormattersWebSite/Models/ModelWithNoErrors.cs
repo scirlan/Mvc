@@ -11,6 +11,6 @@ namespace XmlFormattersWebSite.Models
 
 		public int? NullableIntProperty { get; set; }
 
-		public int IntProperty { get; set; }
+		//public int IntProperty { get; set; }
 	}
 }

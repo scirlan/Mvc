@@ -18,9 +18,11 @@ namespace Microsoft.AspNet.Mvc
 		/// </summary>
 		public JsonContractResolver()
 		{
-			// Need this setting to have [Serializable] types serialized correctly
-			IgnoreSerializableAttribute = true;
-		}
+#if ASPNET50
+            // Need this setting to have [Serializable] types serialized correctly
+            IgnoreSerializableAttribute = true;
+#endif
+        }
 
 		protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
 		{

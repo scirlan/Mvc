@@ -18,17 +18,17 @@ namespace Microsoft.AspNet.Mvc.Xml
 
 		public static void CheckForRequiredAttribute(Type modelType, ModelStateDictionary modelState)
 		{
-			var errors = CheckForRequiredAttribute(modelType);
+			var errors = CheckForRequiredAttributeHelper(modelType, modelState);
 
-			foreach (var error in errors)
-			{
-				modelState.AddModelError(
-					modelType.FullName,
-					new InvalidOperationException(error));
-			}
+			//foreach (var error in errors)
+			//{
+			//	modelState.AddModelError(
+			//		modelType.FullName,
+			//		new InvalidOperationException(error));
+			//}
 		}
 
-		private static List<string> CheckForRequiredAttribute(Type modelType)
+		private static List<string> CheckForRequiredAttributeHelper(Type modelType, ModelStateDictionary modelState)
 		{
 			List<string> errors;
 
@@ -69,15 +69,17 @@ namespace Microsoft.AspNet.Mvc.Xml
 
 							if (!hasDataMemberRequired)
 							{
-								errors.Add(Resources.FormatRequiredProperty_MustHaveDataMemberRequired(
-									property.Name, 
-									modelType.FullName));
-							}
+                                var errorMessage =  Resources.FormatRequiredProperty_MustHaveDataMemberRequired(
+                                                                    property.Name,
+                                                                    property.DeclaringType.FullName);
+
+                                modelState.TryAddModelError(property.DeclaringType.FullName, errorMessage);
+                            }
 						}
 					}
 					else
 					{
-						errors.AddRange(CheckRequiredValidation(property.PropertyType));
+						errors.AddRange(CheckForRequiredAttributeHelper(property.PropertyType, modelState));
 					}
 				}
 			}

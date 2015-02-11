@@ -116,10 +116,10 @@ namespace Microsoft.AspNet.Mvc
                     {
                         _validator.Validate(validationContext, modelBindingContext.ModelStateKey);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
                         //System.Console.WriteLine("actionName : " + actionContext.ActionDescriptor.DisplayName + " :" + modelBindingContext.ModelStateKey);
-                        //System.Console.WriteLine(ex.ToString());
+                        System.Console.WriteLine(ex.ToString());
                         throw;
                     }
                 }

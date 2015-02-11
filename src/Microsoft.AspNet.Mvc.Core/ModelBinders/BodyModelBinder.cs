@@ -27,7 +27,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         /// <param name="context">An accessor to the <see cref="ActionContext"/>.</param>
         /// <param name="bindingContext">An accessor to the <see cref="ActionBindingContext"/>.</param>
         /// <param name="selector">The <see cref="IInputFormatterSelector"/>.</param>
-        /// <param name="bodyModelValidator">The <see cref="IBodyModelValidator"/>.</param>
         /// <param name="bodyValidationExcludeFiltersProvider">
         /// The <see cref="IValidationExcludeFiltersProvider"/>.
         /// </param>

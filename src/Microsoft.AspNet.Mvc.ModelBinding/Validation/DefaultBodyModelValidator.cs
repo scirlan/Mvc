@@ -6,7 +6,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNet.Mvc.ModelBinding.Internal;
 
@@ -58,8 +57,21 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 validationContext.ModelValidationContext.ExcludeFromValidationFilters,
                 modelType))
             {
-                MarkPropertiesAsSkipped(modelKey, metadata, validationContext);
-                ShallowValidate(modelKey, metadata, validationContext, validators);                
+                 try
+                    {
+                        var result = ShallowValidate(modelKey, metadata, validationContext, validators);
+                           // We should not mark properties of simple types, and collections with simple types.
+                //if (metadata.IsComplexType && !typeof(Type).IsAssignableFrom(modelType))
+                    MarkPropertiesAsSkipped(modelKey, metadata, validationContext);
+                return result;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Console.WriteLine("actionName : " + modelType.FullName + (typeof(Type).IsAssignableFrom(modelType)));
+                        System.Console.WriteLine(ex.ToString());
+                        throw;
+                    }
+             
             }
 
             // Check to avoid infinite recursion. This can happen with cycles in an object graph.
@@ -95,19 +107,19 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         private void MarkPropertiesAsSkipped(string currentModelKey, ModelMetadata metadata, ValidationContext validationContext)
         {
             var modelState = validationContext.ModelValidationContext.ModelState;
-            // var currentModelState = modelState.GetFieldValidationState(currentModelKey);
-            //if (currentModelState != ModelValidationState.Unvalidated)
-            //{
-                // There are no sub properties which we need to take a look at.
-                // Either the tree under current node is valid or invalid or there is no entry in the model state.
-                // In all these cases we need not mark properties.
-            //    return;
-            //}
+            var fieldValidationState = modelState.GetFieldValidationState(currentModelKey);
+
+            // Since shallow validation is done, if the modelvalidation state is still marked as unvalidated,
+            // it is because some properties in the subtree are marked as unvalidated. Mark all such properties
+            // as skipped. Models which have their subtrees as Valid or Invalid do not need to be marked as skipped.
+            if (fieldValidationState != ModelValidationState.Unvalidated)
+            {
+                return;
+            }   
 
             foreach (var childMetadata in metadata.Properties)
             {
                 var childKey = ModelBindingHelper.CreatePropertyModelName(currentModelKey, childMetadata.PropertyName);
-
                 var validationState = modelState.GetFieldValidationState(childKey);
 
                 if (validationState == ModelValidationState.Unvalidated)
@@ -176,8 +188,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             string modelKey,
             ModelMetadata metadata,
             ValidationContext validationContext,
-            [NotNull] IEnumerable<IModelValidator> validators, 
-            bool lookAtFields = true)
+            [NotNull] IEnumerable<IModelValidator> validators)
         {
             var isValid = true;
 
@@ -194,7 +205,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
 
                 // If either the model or its properties are unvalidated, validate them now.
                 if (modelValidationState == ModelValidationState.Unvalidated ||
-                    lookAtFields && fieldValidationState == ModelValidationState.Unvalidated)
+                    fieldValidationState == ModelValidationState.Unvalidated)
                 {
                     foreach (var validator in validators)
                     {

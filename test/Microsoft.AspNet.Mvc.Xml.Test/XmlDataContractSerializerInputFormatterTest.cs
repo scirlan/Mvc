@@ -483,7 +483,7 @@ namespace Microsoft.AspNet.Mvc.Xml
             Assert.Equal(true, model[0].IsResidential);
 
             AssertModelStateErrorMessages(
-                typeof(Address).FullName,
+                typeof(List<Address>).FullName,
                 context.ActionContext,
                 containsErrorMessages: new[]
                 {
@@ -548,7 +548,7 @@ namespace Microsoft.AspNet.Mvc.Xml
             Assert.Equal(true, model.AddressProperty.IsResidential);
 
             AssertModelStateErrorMessages(
-                typeof(Address).FullName,
+                typeof(ModelWithPropertyHavingRequiredAttributeValidationErrors).FullName,
                 context.ActionContext,
                 containsErrorMessages: new[]
                 {
@@ -584,7 +584,7 @@ namespace Microsoft.AspNet.Mvc.Xml
             Assert.Equal(true, model.Addresses[0].IsResidential);
 
             AssertModelStateErrorMessages(
-                typeof(Address).FullName,
+                typeof(ModelWithCollectionPropertyHavingRequiredAttributeValidationErrors).FullName,
                 context.ActionContext,
                 containsErrorMessages: new[]
                 {
@@ -619,7 +619,7 @@ namespace Microsoft.AspNet.Mvc.Xml
             Assert.Equal(true, model.IsResidential);
 
             AssertModelStateErrorMessages(
-                typeof(Address).FullName,
+                typeof(ModelInheritingTypeHavingRequiredAttributeValidationErrors).FullName,
                 context.ActionContext,
                 containsErrorMessages: new[]
                 {
@@ -739,7 +739,7 @@ namespace Microsoft.AspNet.Mvc.Xml
             Assert.NotEmpty(actionContext.ModelState);
 
             ModelState modelState;
-            actionContext.ModelState.TryGetValue(typeof(Address).FullName, out modelState);
+            actionContext.ModelState.TryGetValue(modelStateKey, out modelState);
 
             Assert.NotNull(modelState);
             Assert.NotEmpty(modelState.Errors);

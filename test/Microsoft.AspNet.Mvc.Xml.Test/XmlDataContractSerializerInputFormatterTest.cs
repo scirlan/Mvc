@@ -466,11 +466,9 @@ namespace Microsoft.AspNet.Mvc.Xml
         {
             // Arrange
             var input = "<?xml version=\"1.0\" encoding=\"utf-8\"?><ArrayOfAddress " +
-                        "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                        "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">" +
-                        "<Address xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                        "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><IsResidential>" +
-                        "true</IsResidential><Zipcode>98052</Zipcode></Address></ArrayOfAddress>";
+                        "xmlns=\"http://schemas.datacontract.org/2004/07/Microsoft.AspNet.Mvc.Xml\" " +
+                        "xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\">" +
+                        "<Address><IsResidential>true</IsResidential><Zipcode>98052</Zipcode></Address></ArrayOfAddress>";
             var formatter = new XmlDataContractSerializerInputFormatter();
             var contentBytes = Encodings.UTF8EncodingWithoutBOM.GetBytes(input);
             var context = GetInputFormatterContext(contentBytes, typeof(List<Address>));
@@ -482,7 +480,7 @@ namespace Microsoft.AspNet.Mvc.Xml
             Assert.NotNull(model);
             Assert.Equal(1, model.Count);
             Assert.Equal(98052, model[0].Zipcode);
-            Assert.Equal(true, model[1].IsResidential);
+            Assert.Equal(true, model[0].IsResidential);
 
             AssertModelStateErrorMessages(
                 typeof(Address).FullName,

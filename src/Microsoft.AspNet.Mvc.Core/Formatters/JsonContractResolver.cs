@@ -13,17 +13,6 @@ namespace Microsoft.AspNet.Mvc
 	/// </summary>
 	public class JsonContractResolver : DefaultContractResolver
     {
-		/// <summary>
-		/// Initializes a new instance of the <see cref="JsonContractResolver" /> class.
-		/// </summary>
-		public JsonContractResolver()
-		{
-#if ASPNET50
-            // Need this setting to have [Serializable] types serialized correctly
-            IgnoreSerializableAttribute = true;
-#endif
-        }
-
 		protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
 		{
 			var property = base.CreateProperty(member, memberSerialization);

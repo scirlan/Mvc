@@ -149,9 +149,6 @@ namespace Microsoft.AspNet.Mvc.Xml
 
             using (var xmlReader = CreateXmlReader(new NonDisposableStream(request.Body)))
             {
-				// TODO: handle inheritance scenarios
-				RequiredValidationHelper.CheckForRequiredAttribute(context.ModelType, context.ActionContext.ModelState);
-
 				var type = GetSerializableType(context.ModelType);
 
 				var serializer = CreateSerializer(type);

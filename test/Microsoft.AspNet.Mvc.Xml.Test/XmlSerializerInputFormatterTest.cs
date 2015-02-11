@@ -4,18 +4,18 @@
 #if ASPNET50
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Mvc.ModelBinding;
-using Microsoft.AspNet.Mvc.Xml;
 using Microsoft.AspNet.Testing;
 using Moq;
 using Xunit;
-using Xunit.Sdk;
 
 namespace Microsoft.AspNet.Mvc.Xml
 {
@@ -38,9 +38,6 @@ namespace Microsoft.AspNet.Mvc.Xml
             public string SampleString { get; set; }
             public TestLevelOne TestOne { get; set; }
         }
-
-        private const string requiredErrorMessageFormat = "Property '{0}' on type '{1}' has" +
-                                    " RequiredAttribute but no DataMember(IsRequired = true) attribute.";
 
         [Theory]
         [InlineData("application/xml", true)]
@@ -350,198 +347,7 @@ namespace Microsoft.AspNet.Mvc.Xml
             Assert.Equal(expectedString, levelOneModel.sampleString);
             Assert.Equal(XmlConvert.ToDateTime(expectedDateTime, XmlDateTimeSerializationMode.Utc), levelOneModel.SampleDate);
         }
-
-        [Fact]
-        public async Task ModelHavingRequiredErrors()
-        {
-            // Arrange
-            var input = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
-                        "<Address xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                        "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><IsResidential>" +
-                        "true</IsResidential><Zipcode>98052</Zipcode></Address>";
-            var formatter = new XmlSerializerInputFormatter();
-            var contentBytes = Encodings.UTF8EncodingWithoutBOM.GetBytes(input);
-            var context = GetInputFormatterContext(contentBytes, typeof(Address));
-
-            // Act
-            var model = await formatter.ReadAsync(context) as Address;
-
-            // Assert
-            Assert.NotNull(model);
-            Assert.Equal(98052, model.Zipcode);
-            Assert.Equal(true, model.IsResidential);
-            Assert.NotEmpty(context.ActionContext.ModelState);
-
-            ModelState modelState;
-            context.ActionContext.ModelState.TryGetValue(typeof(Address).FullName, out modelState);
-            Assert.NotNull(modelState);
-            Assert.NotEmpty(modelState.Errors);
-
-            var errors = modelState.Errors.Select(error =>
-            {
-                if (string.IsNullOrEmpty(error.ErrorMessage))
-                {
-                    if (error.Exception != null)
-                    {
-                        return error.Exception.Message;
-                    }
-                }
-
-                return error.ErrorMessage;
-            });
-
-            Assert.Contains<string>(
-                string.Format(requiredErrorMessageFormat, nameof(Address.Zipcode), typeof(Address).FullName),
-                errors);
-            Assert.Contains<string>(
-                string.Format(requiredErrorMessageFormat, nameof(Address.IsResidential), typeof(Address).FullName),
-                errors);
-        }
-
-        [Fact]
-        public async Task AddsRequiredErrors2()
-        {
-            // Arrange
-            var input = "<?xml version=\"1.0\" encoding=\"utf-8\"?><ModelWithPropertyHavingRequiredErrors " +
-                "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><Property1><Zipcode>98052</Zipcode><IsResidential>" +
-                "true</IsResidential></Property1></ModelWithPropertyHavingRequiredErrors>";
-            var formatter = new XmlSerializerInputFormatter();
-            var contentBytes = Encodings.UTF8EncodingWithoutBOM.GetBytes(input);
-            var context = GetInputFormatterContext(contentBytes, typeof(ModelWithPropertyHavingRequiredErrors));
-
-            // Act
-            var model = await formatter.ReadAsync(context) as ModelWithPropertyHavingRequiredErrors;
-
-            // Assert
-            Assert.NotNull(model);
-            Assert.NotNull(model.Property1);
-            Assert.Equal(98052, model.Property1.Zipcode);
-            Assert.Equal(true, model.Property1.IsResidential);
-            Assert.NotEmpty(context.ActionContext.ModelState);
-
-            ModelState modelState;
-            context.ActionContext.ModelState.TryGetValue(typeof(Address).FullName, out modelState);
-            Assert.NotNull(modelState);
-            Assert.NotEmpty(modelState.Errors);
-
-            var errors = modelState.Errors.Select(error =>
-            {
-                if (string.IsNullOrEmpty(error.ErrorMessage))
-                {
-                    if (error.Exception != null)
-                    {
-                        return error.Exception.Message;
-                    }
-                }
-
-                return error.ErrorMessage;
-            });
-
-            Assert.Contains<string>(
-                string.Format(requiredErrorMessageFormat, nameof(Address.Zipcode), typeof(Address).FullName),
-                errors);
-            Assert.Contains<string>(
-                string.Format(requiredErrorMessageFormat, nameof(Address.IsResidential), typeof(Address).FullName),
-                errors);
-        }
-
-        [Fact]
-        public async Task AddsRequiredErrors3()
-        {
-            // Arrange
-            var input = "<?xml version=\"1.0\" encoding=\"utf-8\"?><ModelWithCollectionPropertyHavingRequiredErrors" +
-                " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><Property1><Address><Zipcode>98052</Zipcode>" +
-                "<IsResidential>true</IsResidential></Address></Property1>" +
-                "</ModelWithCollectionPropertyHavingRequiredErrors>";
-            var formatter = new XmlSerializerInputFormatter();
-            var contentBytes = Encodings.UTF8EncodingWithoutBOM.GetBytes(input);
-            var context = GetInputFormatterContext(contentBytes, typeof(ModelWithCollectionPropertyHavingRequiredErrors));
-
-            // Act
-            var model = await formatter.ReadAsync(context) as ModelWithCollectionPropertyHavingRequiredErrors;
-
-            // Assert
-            Assert.NotNull(model);
-            Assert.NotNull(model.Property1);
-            Assert.Equal(98052, model.Property1[0].Zipcode);
-            Assert.Equal(true, model.Property1[0].IsResidential);
-            Assert.NotEmpty(context.ActionContext.ModelState);
-
-            ModelState modelState;
-            context.ActionContext.ModelState.TryGetValue(typeof(Address).FullName, out modelState);
-            Assert.NotNull(modelState);
-            Assert.NotEmpty(modelState.Errors);
-
-            var errors = modelState.Errors.Select(error =>
-            {
-                if (string.IsNullOrEmpty(error.ErrorMessage))
-                {
-                    if (error.Exception != null)
-                    {
-                        return error.Exception.Message;
-                    }
-                }
-
-                return error.ErrorMessage;
-            });
-
-            Assert.Contains<string>(
-                string.Format(requiredErrorMessageFormat, nameof(Address.Zipcode), typeof(Address).FullName),
-                errors);
-            Assert.Contains<string>(
-                string.Format(requiredErrorMessageFormat, nameof(Address.IsResidential), typeof(Address).FullName),
-                errors);
-        }
-
-        [Fact]
-        public async Task ModelInheritingTypeHavingRequiredErrors_AddsRequiredErrors()
-        {
-            // Arrange
-            var input = "<?xml version=\"1.0\" encoding=\"utf-8\"?><ModelInheritingTypeHavingRequiredErrors" +
-                " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><Zipcode>98052</Zipcode><IsResidential>true" + 
-                "</IsResidential></ModelInheritingTypeHavingRequiredErrors>";
-            var formatter = new XmlSerializerInputFormatter();
-            var contentBytes = Encodings.UTF8EncodingWithoutBOM.GetBytes(input);
-            var context = GetInputFormatterContext(contentBytes, typeof(ModelInheritingTypeHavingRequiredErrors));
-
-            // Act
-            var model = await formatter.ReadAsync(context) as ModelInheritingTypeHavingRequiredErrors;
-
-            // Assert
-            Assert.NotNull(model);
-            Assert.Equal(98052, model.Zipcode);
-            Assert.Equal(true, model.IsResidential);
-            Assert.NotEmpty(context.ActionContext.ModelState);
-
-            ModelState modelState;
-            context.ActionContext.ModelState.TryGetValue(typeof(Address).FullName, out modelState);
-            Assert.NotNull(modelState);
-            Assert.NotEmpty(modelState.Errors);
-
-            var errors = modelState.Errors.Select(error =>
-            {
-                if (string.IsNullOrEmpty(error.ErrorMessage))
-                {
-                    if (error.Exception != null)
-                    {
-                        return error.Exception.Message;
-                    }
-                }
-
-                return error.ErrorMessage;
-            });
-
-            Assert.Contains<string>(
-                string.Format(requiredErrorMessageFormat, nameof(Address.Zipcode), typeof(Address).FullName),
-                errors);
-            Assert.Contains<string>(
-                string.Format(requiredErrorMessageFormat, nameof(Address.IsResidential), typeof(Address).FullName),
-                errors);
-        }
-
+        
         private InputFormatterContext GetInputFormatterContext(byte[] contentBytes, Type modelType)
         {
             var actionContext = GetActionContext(contentBytes);
@@ -569,20 +375,6 @@ namespace Microsoft.AspNet.Mvc.Xml
             httpContext.SetupGet(c => c.Request).Returns(request.Object);
             httpContext.SetupGet(c => c.Request).Returns(request.Object);
             return httpContext.Object;
-        }
-
-        public class ModelWithPropertyHavingRequiredErrors
-        {
-            public Address Property1 { get; set; }
-        }
-
-        public class ModelWithCollectionPropertyHavingRequiredErrors
-        {
-            public List<Address> Property1 { get; set; }
-        }
-
-        public class ModelInheritingTypeHavingRequiredErrors : Address
-        {
         }
     }
 }
